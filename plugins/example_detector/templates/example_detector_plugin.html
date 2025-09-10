@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Detector Plugin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <h1>Example Detector Plugin</h1>
+    <p>This is the web page for the Example Detector Plugin.</p>
+    <button id="addDroneBtn">Add Drone and Store</button>
+    <button id="addDroneNoStoreBtn">Add Drone without Storing</button>
+    <p id="response"></p>
+
+    <h2>Received Events</h2>
+    <table id="eventsTable">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Event Type</th>
+                <th>Path</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        document.getElementById('addDroneBtn').addEventListener('click', async () => {
+            const response = await fetch('/plugins/ExampleDetectorPlugin/add_drone', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            document.getElementById('response').textContent = `Drone ${data.drone_id} added and stored.`;
+        });
+
+        document.getElementById('addDroneNoStoreBtn').addEventListener('click', async () => {
+            const response = await fetch('/plugins/ExampleDetectorPlugin/add_drone_no_store', {
+                method: 'POST'
+            });
+            const data = await response.json();
+            document.getElementById('response').textContent = `Drone ${data.drone_id} added without storing.`;
+        });
+
+        async function fetchPluginEvents() {
+            const response = await fetch('/plugins/ExampleDetectorPlugin/events');
+            const data = await response.json();
+            
+            const tableBody = document.querySelector("#eventsTable tbody");
+            tableBody.innerHTML = "";
+            data.slice().reverse().forEach(event => {
+                const row = `<tr>
+                    <td>${event.timestamp}</td>
+                    <td>${event.event_type}</td>
+                    <td>${event.path}</td>
+                    <td><pre>${JSON.stringify(event.value, null, 2)}</pre></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        setInterval(fetchPluginEvents, 2000);
+        fetchPluginEvents();
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Project Rules — TheBox (SeaCross integration)
+- Treat docs/BRIEFING.md as the canonical contract; consult it for schemas and boundaries.
+
+
+## Context
+- This repo is "TheBox" for sensor fusion that outputs SeaCross NMEA.
+- SeaCross only consumes CLS + SGT (no SGC). UDP broadcast target is configurable; default 192.168.0.255:62000.
+- The seacross_sender plugin must stay vendor-agnostic (format/ship only).
+
+
+## Golden Interfaces (schemas live in docs/BRIEFING.md §4)
+- object.classification
+- object.sighting.directional (bearing only)
+- object.sighting.relative (bearing + distance → ready for SGT)
+- Confidence is int 0..100; default 75; RemoteID with IDs/serials ⇒ 99.
+
+
+## Boundaries
+- DO NOT put vendor logic or range estimation in seacross_sender.
+- Range/smoothing belong in plugins/range_estimator_*.
+- Normalization (vendor → object.*) belongs in vendor normalizers only.
+
+
+## Style / Process
+- Prefer small, reviewable diffs; preserve comments.
+- When editing code: propose a plan → show diff → then apply.
+- If context is missing, ask me to @file or @folder (e.g., @docs/BRIEFING.md, @plugins/seacross_sender/, @plugins/range_estimator_simple/).
+- Add or update tests when changing NMEA formatting or event contracts.
+
+
+## Specific to Plugins
+- Silvus plugin publishes only bearing events; do not add range or SeaCross formatting here.

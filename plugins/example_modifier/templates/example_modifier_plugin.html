@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Example Modifier Plugin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <h1>Example Modifier Plugin</h1>
+    <p>This plugin listens for detection events and adds a custom key-value pair to them.</p>
+    
+    <form id="modifierForm">
+        <label for="key">Key:</label>
+        <input type="text" id="key" name="key" value="example_modifier_plugin_was_here">
+        <br>
+        <label for="value">Value:</label>
+        <input type="text" id="value" name="value" value="True">
+        <br>
+        <button type="submit">Update</button>
+    </form>
+    <p id="response"></p>
+
+    <script>
+        document.getElementById('modifierForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const key = document.getElementById('key').value;
+            const value = document.getElementById('value').value;
+            const response = await fetch('/plugins/ExampleModifierPlugin/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ key, value })
+            });
+            const data = await response.json();
+            document.getElementById('response').textContent = data.status;
+        });
+    </script>
+</body>
+</html>

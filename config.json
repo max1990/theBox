@@ -1,0 +1,8 @@
+{
+    "plugins": [
+        "droneshield_listener",
+        "labels_ui",
+        "seacross_sender",
+        "persistence_disk"
+    ]
+}

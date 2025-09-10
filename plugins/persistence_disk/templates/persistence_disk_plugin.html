@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Persistence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Scoped just to this page so we don't fight global styles */
+    .persistence-page { color: var(--primary, #00aaff); background: transparent; }
+    .persistence-page a { color: inherit; }
+    .persistence-page b, .persistence-page h1, .persistence-page h2, .persistence-page h3 { color: inherit; }
+    .persistence-page button {
+      border: 1px solid currentColor; background: transparent;
+      padding: .4rem .7rem; border-radius: .5rem; cursor: pointer;
+    }
+  </style>
+</head>
+<body class="persistence-page">
+  <h2>Disk Persistence</h2>
+  <p><b>File:</b> {{ info.path }}</p>
+  <p><b>Size:</b> {{ info.size_bytes }} bytes</p>
+  <p><b>Last modified:</b> {{ info.last_modified or '—' }}</p>
+  <p><b>Auto-save interval:</b> {{ info.interval_sec }}s</p>
+  <p><b>Namespaces:</b> {{ ', '.join(info.namespaces) }}</p>
+  <p><b>Counts:</b>
+    tracks={{ info.counts.tracks }},
+    detections={{ info.counts.detections }},
+    sensor_id_map={{ info.counts.sensor_id_map }},
+    droney_msgs={{ info.counts.droneshield_messages }}
+  </p>
+  <form method="post" action="./save" style="display:inline">
+    <button>Save now</button>
+  </form>
+  <form method="post" action="./load" style="display:inline">
+    <button>Reload from disk</button>
+  </form>
+</body>
+</html>

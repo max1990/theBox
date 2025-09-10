@@ -1,0 +1,71 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+dist/
+build/
+*.manifest
+*.spec
+
+# --- Virtual environments ---
+.venv/
+venv/
+venv-*/
+venv-posix/
+venv-win/
+env/
+env-*/
+
+# --- Test & coverage ---
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.pytype/
+
+# --- Logs & temp ---
+*.log
+*.tmp
+*.swp
+*.swo
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- IDE/editor ---
+.vscode/*
+!.vscode/settings.json   # keep shared settings if you want
+.idea/
+*.iml
+
+# --- Node (if any UI tooling later) ---
+node_modules/
+
+# --- Archives / large binaries ---
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+
+# --- Secrets ---
+.env
+.env.*
+*.local
+
+# --- Project specifics ---
+# Keep prompts/ and .cursor/rules in repo (important for Cursor).
+# If you dump large sensor logs, put them under a 'logs/' or 'captures/'
+# directory and add it here.
+logs/
+captures/
+*.pcap
+*.pcapng

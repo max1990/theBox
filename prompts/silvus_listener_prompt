@@ -1,0 +1,6 @@
+# Task: Maintain plugins/silvus_listener
+- Only publish object.sighting.directional (bearing-only). No ranges or CLS/SGT here.
+- Confidence is int [0..100], default 75.
+- Heading required → if missing, skip emission (do not fabricate).
+- Use SILVUS_REPLAY_PATH for log replay; do NOT read from tests/ inside plugin.
+- Keep UI template minimal; inherit base.html, no plugin-local CSS.

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DroneShield Listener Plugin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <h1>DroneShield Listener Plugin</h1>
+    
+    <h2>Settings</h2>
+    <form id="settingsForm">
+        <label for="port">UDP Port:</label>
+        <input type="number" id="port" name="port">
+        <button type="submit">Update Port</button>
+    </form>
+    <p id="updateStatus"></p>
+
+    <h2>Status</h2>
+    <p>Listener Status: <strong id="listenerStatus"></strong></p>
+    <p>Listening on Port: <strong id="listeningPort"></strong></p>
+
+    <h2>Create Fake Event</h2>
+    <form id="fakeEventForm">
+        <label for="droneName">Drone Name:</label>
+        <input type="text" id="droneName" value="FakeDrone-123"><br>
+        <label for="latitude">Latitude:</label>
+        <input type="number" step="any" id="latitude" value="34.0522"><br>
+        <label for="longitude">Longitude:</label>
+        <input type="number" step="any" id="longitude" value="-118.2437"><br>
+        <label for="altitude">Altitude (m):</label>
+        <input type="number" step="any" id="altitude" value="100"><br>
+        <button type="submit">Send Fake Event</button>
+    </form>
+    <p id="fakeEventStatus"></p>
+
+    <h2>Specific Fake Events</h2>
+    <form id="cubeDroneForm">
+        <h3>Cube Drone (No Location)</h3>
+        <label for="cubeFrequency">Frequency (Hz):</label>
+        <input type="number" id="cubeFrequency" value="2000000000"><br>
+        <button type="submit">Send Fake Cube Drone event</button>
+    </form>
+    <form id="autelForm">
+        <h3>AUTEL Drone (No Location)</h3>
+        <label for="autelFrequency">Frequency (Hz):</label>
+        <input type="number" id="autelFrequency" value="2454000000"><br>
+        <button type="submit">Send Fake Autel event</button>
+    </form>
+
+    <form id="djiProtensicForm">
+        <h3>DJI (Protensic) Fake Events</h3>
+        <label for="djiFrequency1">Frequency 1 (Hz):</label>
+        <input type="number" id="djiFrequency1" value="2454000000"><br>
+        <label for="djiFrequency2">Frequency 2 (Hz):</label>
+        <input type="number" id="djiFrequency2" value="2405000000"><br>
+        <button type="submit">Send DJI (Protensic) Fake event</button>
+    </form>
+
+    <h2>Received Events</h2>
+    <table id="eventsTable">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Source IP</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        document.getElementById('settingsForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const port = document.getElementById('port').value;
+            const response = await fetch('/plugins/DroneShieldListenerPlugin/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ port: port })
+            });
+            const data = await response.json();
+            document.getElementById('updateStatus').textContent = data.message;
+            fetchPluginStatus();
+        });
+
+        document.getElementById('fakeEventForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const droneName = document.getElementById('droneName').value;
+            const latitude = document.getElementById('latitude').value;
+            const longitude = document.getElementById('longitude').value;
+            const altitude = document.getElementById('altitude').value;
+
+            const fakeEvent = {
+                "Type": "Detection",
+                "Data": {
+                    "Name": droneName,
+                    "Vendor": "Fake Inc.",
+                    "UAType": "Mavic Fake",
+                    "DroneLatitudeDegrees": parseFloat(latitude),
+                    "DroneLongitudeDegrees": parseFloat(longitude),
+                    "DroneGeodeticAltitudeMeters": parseFloat(altitude),
+                    "SerialNumber": `FAKE-${Math.floor(Math.random() * 1000)}`
+                }
+            };
+
+            const response = await fetch('/plugins/DroneShieldListenerPlugin/create_fake_event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fakeEvent)
+            });
+            const data = await response.json();
+            document.getElementById('fakeEventStatus').textContent = data.message;
+        });
+
+        document.getElementById('cubeDroneForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const frequency = document.getElementById('cubeFrequency').value;
+            const cubeDroneEvent = {
+                'APIVersion': '2', 'Data': {'AbsoluteAngleOfArrival': -9999, 'AngleOfArrival': -9999, 'AngleOfArrivalError': -9999, 'AngleOfArrival_Error': -9999, 'BearingDegrees': -9999, 'CorrelationKey': 'Empty_Field', 'DetectionCount': 1, 'DroneGeodeticAltitudeMeters': -9999, 'DroneHeightMeters': -9999, 'DroneHeightType': -9999, 'DroneLatitudeDegrees': -9999, 'DroneLongitudeDegrees': -9999, 'DronePositionMGRS': 'Empty_Field', 'DronePressureAltitudeMeters': -9999, 'DroneSerialNumber': 'Empty_Field', 'FrequencyHertz': 2000000000, 'HorizontalDistance': -9999, 'IsDrone': true, 'MacAddress': 'Empty_Field', 'Name': 'CubeDrone', 'Navigation': {'datetime': '1970-01-01T00:00:00+00:00', 'heading': {'average': 400.0, 'heading': 400.0, 'instant': 400.0, 'samples': 0, 'valid': false}, 'lock_status': {'last_lock': '1970-01-01T00:00:00+00:00', 'lock_state': false}, 'metadata': {'exit_compass_monotonic': 1417.959042062, 'exit_compass_system_clock': '2025-08-08T21:51:52.984691+00:00'}, 'position': {'acceleration_x': null, 'acceleration_y': null, 'acceleration_z': null, 'altitude': null, 'latitude': null, 'longitude': null, 'rate_of_turn': null, 'satellites': 0, 'speed': null, 'track': null}}, 'OperatorID': 'Empty_Field', 'OperatorLatitudeDegrees': -9999, 'OperatorLocationGNSS': -9999, 'OperatorLongitudeDegrees': -9999, 'OperatorPositionMGRS': 'Empty_Field', 'RSSI': -34, 'RegistrationID': 'Empty_Field', 'SSID': 'CubeDrone', 'SerialNumber': '0350198542589', 'SpeedMetersPerSecond': -9999, 'TakeOffLatitudeDegrees': -9999, 'TakeOffLongitudeDegrees': -9999, 'TakeOffPositionMGRS': 'Empty_Field', 'Time': 1754689913336, 'TimeUTC': '2025-08-08T21:51:53.336000+00:00', 'TrackingType': 1, 'Type': 'RemoteID', 'UAType': 'Empty_Field', 'UUID': 'Empty_Field', 'Vendor': 'Empty_Field', 'VerticalDistance': -9999, 'VerticalSpeedMetersPerSecond': -9999, 'YawDegrees': -9999}, 'Type': 'DetectionRemoteDroneID'
+            };
+            cubeDroneEvent.Data.FrequencyHertz = parseInt(frequency);
+            await sendFakeEvent(cubeDroneEvent);
+        });
+
+        document.getElementById('autelForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const frequency = document.getElementById('autelFrequency').value;
+            const autelEvent = {
+                'APIVersion': '2', 'Data': {'AbsoluteAngleOfArrivalRadians': 12.566370614359172, 'AngleOfArrivalErrorRadians': 0.0, 'AngleOfArrivalRadians': 12.566370614359172, 'CorrelationKey': '3050528454', 'DetectionCount': 5, 'EpochTimeMilliSeconds': 1754690045023, 'FrequencyHertz': 2454000000, 'IsDrone': true, 'MacAddress': 'Empty_Field', 'Name': 'AUTEL', 'Protocol': 'OFDM', 'RSSI': -64, 'SerialNumber': '0350198542589', 'SignalBars': 10, 'TimeUTC': '2025-08-08T21:53:56.314941+00:00', 'Type': 'Radio', 'Vendor': 'AUTEL'}, 'Type': 'Detection'
+            };
+            autelEvent.Data.FrequencyHertz = parseInt(frequency);
+            await sendFakeEvent(autelEvent);
+        });
+
+        document.getElementById('djiProtensicForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            const frequency1 = document.getElementById('djiFrequency1').value;
+            const frequency2 = document.getElementById('djiFrequency2').value;
+            
+            // First DJI (Protensic) event - from line 1 of your file
+            const djiEvent1 = {
+                'APIVersion': '2', 
+                'Data': {
+                    'AbsoluteAngleOfArrivalRadians': 12.566370614359172, 
+                    'AngleOfArrivalErrorRadians': 0.0, 
+                    'AngleOfArrivalRadians': 12.566370614359172, 
+                    'CorrelationKey': '1712823933', 
+                    'DetectionCount': 10, 
+                    'EpochTimeMilliSeconds': 1754688432268, 
+                    'FrequencyHertz': parseInt(frequency1), 
+                    'IsDrone': false, 
+                    'MacAddress': 'Empty_Field', 
+                    'Name': 'DJI', 
+                    'Protocol': 'LB FHSS', 
+                    'RSSI': -79, 
+                    'SerialNumber': '0350198542589', 
+                    'SignalBars': 8, 
+                    'TimeUTC': '2025-08-08T21:26:34.017575+00:00', 
+                    'Type': 'Radio', 
+                    'Vendor': 'DJI'
+                }, 
+                'Type': 'Detection'
+            };
+            
+            // Second DJI (Protensic) event - from line 2 of your file
+            const djiEvent2 = {
+                'APIVersion': '2', 
+                'Data': {
+                    'AbsoluteAngleOfArrivalRadians': 12.566370614359172, 
+                    'AngleOfArrivalErrorRadians': 0.0, 
+                    'AngleOfArrivalRadians': 12.566370614359172, 
+                    'CorrelationKey': '1363283903', 
+                    'DetectionCount': 6, 
+                    'EpochTimeMilliSeconds': 1754688426458, 
+                    'FrequencyHertz': parseInt(frequency2), 
+                    'IsDrone': true, 
+                    'MacAddress': 'Empty_Field', 
+                    'Name': 'DJI AUT XIA', 
+                    'Protocol': 'LB OFDM', 
+                    'RSSI': -61, 
+                    'SerialNumber': '0350198542589', 
+                    'SignalBars': 10, 
+                    'TimeUTC': '2025-08-08T21:26:43.075618+00:00', 
+                    'Type': 'Radio', 
+                    'Vendor': 'DJI AUT XIA'
+                }, 
+                'Type': 'Detection'
+            };
+            
+            // Send both events
+            await sendFakeEvent(djiEvent1);
+            await sendFakeEvent(djiEvent2);
+            
+            document.getElementById('fakeEventStatus').textContent = 'Both DJI (Protensic) fake events sent successfully.';
+        });
+
+        async function sendFakeEvent(eventData) {
+            const response = await fetch('/plugins/DroneShieldListenerPlugin/create_fake_event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(eventData)
+            });
+            const data = await response.json();
+            document.getElementById('fakeEventStatus').textContent = data.message;
+        }
+
+        async function fetchPluginStatus() {
+            const response = await fetch('/plugins/DroneShieldListenerPlugin/status');
+            const data = await response.json();
+            
+            document.getElementById('listenerStatus').textContent = data.listener_status;
+            document.getElementById('listeningPort').textContent = data.port;
+            document.getElementById('port').value = data.port;
+
+            const tableBody = document.querySelector("#eventsTable tbody");
+            tableBody.innerHTML = "";
+            data.events.slice().reverse().forEach(event => {
+                const row = `<tr>
+                    <td>${event.timestamp}</td>
+                    <td>${event.source_ip}</td>
+                    <td><pre>${JSON.stringify(event.data, null, 2)}</pre></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        setInterval(fetchPluginStatus, 2000);
+        fetchPluginStatus();
+    </script>
+</body>
+</html>
