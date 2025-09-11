@@ -30,3 +30,103 @@
 
 ## Specific to Plugins
 - Silvus plugin publishes only bearing events; do not add range or SeaCross formatting here.
+
+
+# Plugin Chat Rules
+
+This file collects guardrails and conventions for building **TheBox plugins**.  
+Every future plugin prompt should include:  
+> “Follow `plugin-chat-rules.md` in the repo.”
+
+---
+
+## 1. Folder & Naming
+- Each plugin lives under `plugins/{plugin_name}/`
+- Folder name = `{vendor}_listener` (e.g., `silvus_listener`, `droneshield_listener`)
+- Test suite lives at top level: `tests/{plugin_name}/`
+
+---
+
+## 2. Required Files
+Inside `plugins/{plugin_name}/`:
+- `__init__.py`
+- `plugin.py` → must define `{Vendor}ListenerPlugin(PluginInterface)`
+- `parser.py` → log/stream parsing (if applicable)
+- `bearing.py` or other helpers (only if needed)
+- `config.py` → knobs, error/confidence defaults, replay_path
+- `templates/{plugin_name}.html` → UI template (extends `base.html`)
+- `README-{plugin_name}.md` → plugin-specific readme
+
+Inside `tests/{plugin_name}/`:
+- `fixtures/fixture.txt` → realistic but small sample log
+- `test_{plugin_name}_unit.py` → parser + normalize tests
+
+---
+
+## 3. Plugin Interface
+- Inherit from `PluginInterface`.
+- Must implement:
+  - `load()` (start threads/listeners if needed)
+  - `unload()` (clean up threads/listeners)
+  - `get_blueprint()` (register `/` template + `/status` JSON)
+- Publish events only via `self.publish(event_type, data, store_in_db=True/False)`.
+- Event types allowed from vendor plugins:
+  - `object.classification` (optional, one per emitter/cluster)
+  - `object.sighting.directional` (bearing-only, with error/quality if available)
+- **Never** emit range, CLS, or SGC from a vendor plugin.
+
+---
+
+## 4. Event Schema Conventions
+- **Confidence:** `int 0..100` (default 75)
+- **Bearing:** `bearing_deg_true` always degrees true (never sensor-relative)
+- **Error:** `bearing_error_deg`, default 5.0 if vendor doesn’t provide
+- **Time:** ISO8601 string, from vendor timestamps (convert if necessary)
+- Skip emission if heading is missing (no GPS) unless explicitly allowed.
+
+---
+
+## 5. Tests
+- Tests use `pytest`.
+- Fixtures live under `tests/{plugin_name}/fixtures/`.
+- Paths must be **relative** using `Path(__file__).parent`, not hard-coded.
+- Tests assert:
+  - Parser yields expected record(s).
+  - `_emit_bearing()` or equivalent produces correct number of events.
+  - Bearings are within [0, 360).
+
+---
+
+## 6. HTML/CSS Conventions
+- Templates must `{% extends "base.html" %}`.
+- Content is wrapped in `<div class="{plugin_name}-page container mt-3">`.
+- Use **Bootstrap components** (`.card`, `.table`, `.badge`, etc.).
+- **Do not** create a per-plugin `static/` folder; all styling comes from the global `static/main.css`.
+- JS fetches status from `./status` and auto-refreshes every 2s.
+
+---
+
+## 7. Prompting Rules (for Cursor/ChatGPT)
+When creating a new plugin:
+- Always follow `plugin-chat-rules.md` and **do not deviate**.
+- Do not invent per-plugin CSS or JS outside Bootstrap.
+- Do not add features outside scope (e.g., ranges, CLS formatting).
+- Keep naming consistent: `{Vendor}ListenerPlugin` class, folder `vendor_listener`.
+- Provide both plugin code **and** tests in one go.
+
+---
+
+## 8. Git / Project Hygiene
+- Never commit venvs (`.venv/`, `venv-*/`, etc.).
+- Always commit:
+  - `.cursor/rules`
+  - `prompts/{plugin_name}_prompt.md`
+  - `README-{plugin_name}.md`
+  - `plugin-chat-rules.md` (this file)
+
+---
+
+### Notes
+- This file will evolve as new conventions are added.
+- Treat it as **the single source of truth** for plugin coding style.
+

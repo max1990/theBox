@@ -69,3 +69,6 @@ logs/
 captures/
 *.pcap
 *.pcapng
+
+# --- Special Files ---
+ReadMe-tcp_comms_zip.txt
