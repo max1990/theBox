@@ -2,10 +2,15 @@ import socket
 import json
 from sys import *
 import binascii
+import time
 import struct
+import math
 from pyproj import Proj, transform
 from pyproj import Transformer
 import array
+
+import tcp_sender
+import trakka_rx_statemachine
 
 import argparse, math, time, sys, os
 # Ensure project root is on sys.path so `plugins` is importable when run from tests/
@@ -32,8 +37,37 @@ lla_z = 95
 
 
 
-print ('-- Sending to Camera--------------------------')
+print ('-- Sending to Simulator--------------------------')
 s = tcp_sender.tcp_sender()
+
+# print ('----------------------------- Enable and recieve Drone Identification Messages ')
+
+###  ENABLE        ---- always send this to enable the data return ----
+s.modify_mti(4,30)
+
+
+# ### Recieve           # this listens to messages we need to implenemt this gracefully because it tells us what it sees
+# sm = trakka_rx_statemachine.trakka_rx_statemachine()
+# while True:
+#     try:
+#         s.get_azimuth_status()
+#         rdata = s.tcpSock.recv(4096) 
+#         # self.tcpSock.close()
+#         sm.process_data(rdata)
+#     except socket.timeout:
+#         pass
+# print ('----------------------------- Enable and recieve Drone Identification Messages ')
+
+
+print ('----------------------------- Proportional Control ')
+
+# starting at 0,0
+s.set_gimbal_mode(0)                   # set to rate mode
+print ('---------------------------------')
+s.proportional_control(16,67)        # how to call the abiity to slew -- this one will block until the camera reaches it
+
+print ('----------------------------- Proportional Control ')
+
 
 
 # print ('----------------------------- GeoPoint ')
@@ -47,7 +81,7 @@ s = tcp_sender.tcp_sender()
 
 # print ('Setting ECEF')
 # s.setpoint_ecef(ecef_x, ecef_y, ecef_z)
-# s.set_gimbal_mode(3)
+# s.set_gimbal_mode(3)                  # sets the camera to geo-point
 
 # print ('Done ECEF')
 
@@ -75,6 +109,7 @@ s = tcp_sender.tcp_sender()
 # time.sleep(3)
 # g_mode = s.get_gimbal_mode()
 # print ('Reading Gimbal Mode ================================ : ',g_mode)
+
 # print ('----------------------------- SET GIMBAL MODE')
 
 
@@ -131,7 +166,15 @@ s = tcp_sender.tcp_sender()
 # print ('Degree equivalent: ',math.degrees(az_status))
 # print ('----------------------------- SET AZIMUTH')
 
-# print ('==========================================')
+print ('==========================================')
 
 print ('EXITING...')
 exit()
+
+
+
+
+
+
+
+

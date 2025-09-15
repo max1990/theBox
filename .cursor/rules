@@ -130,3 +130,12 @@ When creating a new plugin:
 - This file will evolve as new conventions are added.
 - Treat it as **the single source of truth** for plugin coding style.
 
+
+## Field Ops Constraints — Relative-Only Heading
+
+- The Trakka camera will be operated without reliable GPS/INS or true-north.
+- All bearings presented to plugins MUST be treated as **RELATIVE TO VESSEL BOW = 0°**.
+- Plugins MUST NOT require INS/GEO mode or absolute-azimuth references.
+- Each session SHALL support a runtime “relative zero” calibration: the operator points the camera forward (bow) and calls a function to set the current azimuth as 0°. All subsequent bearing commands are interpreted relative to this zero.
+- Elevation commands MUST be clamped to the safe range (−20° .. +120°).
+- Vendor-specific protocol usage MUST remain inside the corresponding plugin module; do not propagate vendor code or assumptions into SeaCross sender or framework-level components.

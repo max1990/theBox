@@ -9,6 +9,7 @@ from pyproj import Proj, transform
 from pyproj import Transformer
 import array
 
+import trakka_rx_statemachine
 ##########################################################################
 #
 #  This is a python 3 class for sending tcp packets to the Trakka camera.
@@ -20,13 +21,27 @@ import array
 
 
 class tcp_sender:
-
+ 
+    #tcp_host = "127.0.0.1"
     tcp_host = "169.254.1.181"
     tcp_port = 51555
     tcp_buf  = 1024
 
+    tcpSock = socket.socket()
+    tcpSock.settimeout(1)
+    tcpSock.connect((tcp_host,tcp_port))
+
     sync1 = 167
     sync2 = 84
+    
+    gain = 2.5                                              # how fast the camera moves (deg/sec * gain * error%)
+    rate_threshold = 30                                     # max rate (60 is max)
+
+    exit_threshold_deg  = .1                                # how close before we say stop (0.1 degree)
+    exit_threshold_rad = math.radians(exit_threshold_deg)   # same as above
+    
+    current_az = 0
+    current_el = 0
 
     def calc_checksum_ba(self,data):
         #data is passed in as the full packet minus the checksum bytes
@@ -137,27 +152,121 @@ class tcp_sender:
         else:
             print ('Data Checksum Error')
 
+
+    def send_async_data_request(self,mclass,code,size,h_address,verbose=0):
+        d_address = int(h_address)
+        base_packet = struct.pack('<BBBBHH',self.sync1,self.sync2,mclass,code,size,d_address)
+
+                #Calc and append checksum bytes
+        cs_dict = self.calc_checksum(base_packet)
+        self.packet = base_packet + self.packU8(cs_dict['sumA']) + self.packU8(cs_dict['sumB'])
+        
+        # for debugging
+        if verbose:
+            self.enum_bytes(self.packet, 'reading {}'.format(h_address))
+        
+        #send packet and recieve return packet
+        self.send_packet(self.packet,0)
+        
+
     def send_packet(self,packet,wait_for_response = 1):
 
-        tcpSock = socket.socket()
-        tcpSock.settimeout(30)
-        tcpSock.connect((self.tcp_host,self.tcp_port))
-
-        if(tcpSock.send(packet)):    
+        if(self.tcpSock.send(packet)):    
             #print ('Sending message:',packet)
 
-            if wait_for_response:
-                rdata = tcpSock.recv(4096) 
-                tcpSock.close()
-                #rdata_ba = bytearray(rdata)
-                #return rdata_ba
-                return rdata
-            
+            # if wait_for_response:
+                # rdata = self.tcpSock.recv(4096) 
+                # self.tcpSock.close()
+                # #rdata_ba = bytearray(rdata)
+                # #return rdata_ba
+                # return rdata
+
+            #print ('Packet sent successfully: ', packet)
+            pass
         else:
             print ('Error sending packet:',packet)
 
+    
+    def proportional_control(self,seek_az,seek_el):
+    
+        # print ('###########################################')
+        # print ('###########################################')
+        seek_result = False
+        sm = trakka_rx_statemachine.trakka_rx_statemachine()
+        
+        while not seek_result: 
+            seek_result = self.seek_az_el(seek_az,seek_el)
+            
+            #trick into working w/o tcp
+            #self.current_az = self.current_az + self.current_az_rate
+            #self.current_el = self.current_el + self.current_el_rate
+            
+            self.get_azimuth_status()
+            self.get_elevation_status()
+            
+            #read tcp port, pass to statemachine
+            rdata = self.tcpSock.recv(4096) 
+            # self.tcpSock.close()
+            sm.process_data(rdata)
+            self.current_az = math.degrees(sm.azimuth)
+            self.current_el = math.degrees(sm.elevation)
+            
+            
+            
+        # print ('###########################################')
+        # print ('###########################################')
+        # print ('seek complete')
+        
+        
+    
+    def seek_az_el(self,seek_az,seek_el):
+        
+        #determine difference and which direction to move
+        az_diff = seek_az - self.current_az 
+        el_diff = seek_el - self.current_el
+        
+        if abs(az_diff) > 180:
+            if az_diff > 0:
+                az_diff = az_diff - 360
+            else:
+                az_diff = az_diff + 360 
+        
+        if abs(az_diff) < self.exit_threshold_deg and abs(el_diff) < self.exit_threshold_deg:
+            self.set_azimuth_rate(0)
+            self.set_elevation_rate(0)
+            return True
+        
+        
+        
+        az_rate = math.radians(az_diff) * self.gain
+        el_rate = math.radians(el_diff) * self.gain
+        
+        if az_rate > self.rate_threshold:
+            az_rate = self.rate_threshold
+            
+        if el_rate > self.rate_threshold:
+            el_rate = self.rate_threshold
+        
+        # print ('Current AZ : ',self.current_az)
+        # print ('Seek AZ    : ',seek_az)
+        # print ('az diff    : ',az_diff)
+        # print ('az rate    : ',az_rate)
+        
+        # print ('Current EL : ',self.current_el)
+        # print ('Seek EL    : ',seek_el)
+        # print ('el_diff    : ',el_diff)
+        # print ('el_rate    : ',el_rate)
+        
+        self.set_azimuth_rate(az_rate)
+        self.set_elevation_rate(el_rate)
+        
+        # send read AZ
+        # send read EL
+        
+        return False
 
-
+        
+        
 
     # ------------------------------------------------------------------------------------------------------
 
@@ -171,16 +280,16 @@ class tcp_sender:
         #Page 13 : Gimbal  Angle AZ OA         0x1809 (6153)  Angle in radians    F32
         #CLASS : 1, CODE : 3, SIZE : 2
         h_address = 0x1809
-        payload = self.read_data_packet(1,3,2,h_address)
-        return payload
+        payload = self.send_async_data_request(1,3,2,h_address)
+
 
     def get_elevation_status(self):
         ## NEEDS PROPER CHECKSUM
         #Page 13 : Angle EL OA                 0x180A (6154)  Angle in radians    F32
         #CLASS : 1, CODE : 3, SIZE : 2
         h_address = 0x180A
-        payload = self.read_data_packet(1,3,2,h_address)
-        return payload
+        payload = self.send_async_data_request(1,3,2,h_address)
+        
         
     def get_zoom_status(self,sensor):
 
@@ -222,6 +331,8 @@ class tcp_sender:
 
 
     def set_azimuth_rate(self,value):
+    
+        self.current_az_rate = value
         ############################################################################### COMPLETE
         # NOTE: Set Mode (CLASS 0x02, CODE 0x81) to Rate (0) for this command to have effect.
         # CLASS: 0x02 , CODE: 0x02 ,  SIZE: 0x04  , Value: (F32) Angular rate in radians per second
@@ -237,6 +348,7 @@ class tcp_sender:
         self.send_packet(self.packet,0)
 
     def set_elevation_rate(self,value):
+        self.current_el_rate = value
         ###############################################################################
         # CLASS: 0x02 ,  CODE: 0x03 , SIZE: 0x04 , Value: (F32) Angular rate in radians per second
         base_packet = struct.pack('<BBBBHf',self.sync1,self.sync2,2,3,4,value)
@@ -332,11 +444,11 @@ class tcp_sender:
         
         self.send_packet(self.packet,0)
         
-    def modify_mti(self,command,sensor,parameter_x,parameter_y):
-        #Page 34: 3.7.3 :  CLASS: 0x82 (130) ,  CODE: 0x02 , SIZE: 0x03 , Command (U8), parameter (S16)
+    def modify_mti(self,command,value):
+        #Page 34: 3.7.3 :  CLASS: 0x82 (130) ,  CODE: 0x03 , SIZE: 0x03 , Command (U8), parameter (S16)
         # 0:0, 1 : 0-128, 2:-1, +1, 3:0+, 4:0+
         #                                      B          B          B   B H B       B      h           h
-        base_packet = struct.pack('<BBBBHBBhh',self.sync1,self.sync2,130,2,3,command,sensor,parameter_x,parameter_y)
+        base_packet = struct.pack('<BBBBHBh',self.sync1,self.sync2,130,3,3,command,value)
 
         #Calc and append checksum bytes
         cs_dict = self.calc_checksum(base_packet)
@@ -395,7 +507,7 @@ class tcp_sender:
 
         #print(f"ECEF Coordinates: X={ecef_x}, Y={ecef_y}, Z={ecef_z}")
         return ecef_x, ecef_y, ecef_z
-
+    
     # ---------------------- ABSOLUTE POINTING (CAGE) ----------------------
     # These two wrappers send absolute setpoints (in radians) to the gimbal.
     # REQUIREMENT: Set gimbal mode to CAGE (1) before using these:
