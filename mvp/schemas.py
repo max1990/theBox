@@ -43,3 +43,17 @@ class SGTMessage(BaseModel):
     altitude_err_m: float
 
 
+class VisionResult(BaseModel):
+    track_id: str | int
+    verified: bool
+    label: str | None = None
+    latency_ms: int
+
+
+class ConfidenceUpdate(BaseModel):
+    track_id: str | int
+    previous: float
+    updated: float
+    reason: str
+
+

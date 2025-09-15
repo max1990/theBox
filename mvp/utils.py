@@ -26,3 +26,7 @@ def rad_to_bearing_deg(rad: float) -> float:
     return deg if deg >= 0 else deg + 360.0
 
 
+def clamp(x: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, x))
+
+

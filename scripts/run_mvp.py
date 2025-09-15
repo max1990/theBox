@@ -21,11 +21,13 @@ from mvp.config import (
 )
 from mvp.db_adapter import DBAdapter
 from mvp.plugins.droneshield_listener.udp_listener import DroneShieldUDPListener
-from mvp.plugins.ranging.range_stub import RangeStub
 from mvp.plugins.search.search_stub import SearchStub
 from mvp.plugins.seacross.seacross_adapter import SeaCrossAdapter
 from mvp.schemas import CLSMessage, SGTMessage
 from scripts.udp_replay import replay
+from plugins.vision.vision_plugin import VisionPlugin
+from plugins.confidence.confidence_plugin import ConfidencePlugin
+from plugins.range.range_plugin import RangePlugin
 
 
 def main():
@@ -36,18 +38,25 @@ def main():
         "sgt": 0,
         "bumps": 0,
         "range": 0,
+        "vision_runs": 0,
+        "confidence_updates": 0,
+        "range_estimates": 0,
     }
 
     db = DBAdapter(DB_PATH)
     seacross = SeaCrossAdapter(SEACROSS_HOST, SEACROSS_PORT)
-    range_stub = RangeStub(db, RANGE_KM)
+    vision = VisionPlugin()
+    confidence = ConfidencePlugin()
+    ranger = RangePlugin()
 
     latest_bearing_per_track: dict[str, float] = {}
 
     def on_search_result(track_id: str, verified: bool):
         if verified:
             db.mark_validated(track_id)
-            db.update_track_confidence(track_id, 1.0)
+            new_conf = confidence.update_after_vision(1.0, True)
+            stats["confidence_updates"] += 1
+            db.update_track_confidence(track_id, new_conf)
             stats["bumps"] += 1
             # Emit CLS once
             if not db.was_cls_emitted(track_id):
@@ -71,12 +80,16 @@ def main():
         # Track upsert
         track_id = db.upsert_track(det.sensor_track_key, det.timestamp_ms)
         db.touch_track(track_id, det.timestamp_ms)
-        # Confidence at first detection
-        db.update_track_confidence(track_id, DEFAULT_CONFIDENCE)
-        # Range stub on first sighting
+        # Confidence at first detection via plugin
+        base_conf = confidence.initial_score()
+        stats["confidence_updates"] += 1
+        db.update_track_confidence(track_id, base_conf)
+        # Range estimate on first sighting
         if db.get_status(track_id) == "new":
-            range_stub.apply_on_first(track_id)
+            km = ranger.estimate_km(det.signal, det.bearing_deg)
+            db.update_track_range(track_id, km)
             stats["range"] += 1
+            stats["range_estimates"] += 1
         # Record detection
         db.insert_detection(track_id, det.dict(), DEFAULT_CONFIDENCE, json.dumps(det.dict()))
 
@@ -84,7 +97,22 @@ def main():
         stats["camera_cmds"] += 1
         latest_bearing_per_track[track_id] = float(det.bearing_deg)
         # Immediately mark slew complete and start search
-        search.run(track_id)
+        async def do_vision_and_search():
+            nonlocal track_id
+            # vision
+            res = await vision.run_verification(track_id)
+            stats["vision_runs"] += 1
+            if res.verified:
+                db.set_class_label(track_id, res.label)
+                on_search_result(track_id, True)
+            else:
+                # drop to false floor but don't emit CLS/SGT
+                prev_conf = base_conf
+                new_conf = confidence.update_after_vision(prev_conf, False)
+                stats["confidence_updates"] += 1
+                db.update_track_confidence(track_id, new_conf)
+        import asyncio
+        asyncio.run(do_vision_and_search())
 
         # If validated already, emit SGT per detection
         if db.get_status(track_id) == "validated":

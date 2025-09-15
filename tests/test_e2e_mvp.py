@@ -22,6 +22,12 @@ def test_e2e_mvp(monkeypatch):
     monkeypatch.setenv("REPLAY_INTERVAL_MS", "5")
     monkeypatch.setenv("DB_PATH", os.path.join(tempfile.gettempdir(), "thebox_mvp_test.sqlite"))
     monkeypatch.setenv("SEARCH_VERDICT", "true")
+    monkeypatch.setenv("VISION_VERDICT", "true")
+    monkeypatch.setenv("VISION_LABEL", "Quadcopter")
+    monkeypatch.setenv("CONFIDENCE_BASE", "0.75")
+    monkeypatch.setenv("CONFIDENCE_TRUE", "1.0")
+    monkeypatch.setenv("RANGE_MODE", "fixed")
+    monkeypatch.setenv("RANGE_FIXED_KM", "2.0")
 
     try:
         run_main()

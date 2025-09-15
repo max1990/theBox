@@ -33,6 +33,7 @@ class DBAdapter:
                   lat REAL,
                   lon REAL,
                   status TEXT,
+                  class_label TEXT NULL,
                   cls_emitted INT DEFAULT 0
                 )
                 """
@@ -119,6 +120,11 @@ class DBAdapter:
                     float(confidence),
                 ),
             )
+            con.commit()
+
+    def set_class_label(self, track_id: str, label: str | None):
+        with self._lock, self._conn() as con:
+            con.execute("UPDATE tracks SET class_label=? WHERE track_id=?", (label, track_id))
             con.commit()
 
     def get_track_by_sensor_key(self, sensor_track_key: str) -> Optional[str]:
