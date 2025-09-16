@@ -1,3 +1,11 @@
+# Load environment early
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+
+from mvp.env_loader import load_thebox_env
+load_thebox_env()
+
 from flask import Flask, render_template, jsonify, request
 from thebox.database import DroneDB
 from thebox.event_manager import EventManager

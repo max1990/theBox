@@ -73,8 +73,8 @@ def _default_talker_id() -> str:
     return letters[:2] if len(letters) >= 2 else "XA"
 
 TALKER_ID      = _default_talker_id()
-BROADCAST_IP   = os.getenv("THEBOX_BROADCAST_IP", "192.168.0.255")
-BROADCAST_PORT = int(os.getenv("THEBOX_BROADCAST_PORT", "62000"))
+BROADCAST_IP   = os.getenv("SEACROSS_HOST", os.getenv("THEBOX_BROADCAST_IP", "192.168.0.255"))
+BROADCAST_PORT = int(os.getenv("SEACROSS_PORT", os.getenv("THEBOX_BROADCAST_PORT", "62000")))
 
 
 # --------------------------- NMEA helpers ---------------------------

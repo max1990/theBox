@@ -14,7 +14,7 @@ from mvp.config import (
     SEARCH_DURATION_MS,
     SEARCH_MAX_MS,
     DEFAULT_CONFIDENCE,
-    RANGE_KM,
+    RANGE_FIXED_KM,
     DB_PATH,
     SEACROSS_HOST,
     SEACROSS_PORT,
@@ -144,6 +144,19 @@ def main():
     listener.stop()
 
     summary = db.summary()
+    
+    # Log counters to mvp_demo.log
+    log = logging.getLogger("mvp_demo")
+    log.info("=== MVP DEMO COUNTERS ===")
+    log.info(f"vision_runs: {stats['vision_runs']}")
+    log.info(f"confidence_updates: {stats['confidence_updates']}")
+    log.info(f"range_estimates: {stats['range_estimates']}")
+    log.info(f"tracks_created: {summary['tracks']}")
+    log.info(f"detections_ingested: {summary['detections']}")
+    log.info(f"cls_emitted: {stats['cls']}")
+    log.info(f"sgt_emitted: {stats['sgt']}")
+    log.info(f"camera_commands: {stats['camera_cmds']}")
+    
     print("=== MVP DEMO PASSED ===")
     print(f"Tracks created: {summary['tracks']}")
     print(f"Detections ingested: {summary['detections']}")
@@ -152,6 +165,9 @@ def main():
     print(f"Confidence bumps 0.75 -> 1.0: {stats['bumps']}")
     print(f"Range estimates applied: {stats['range']} (2.0 km)")
     print(f"Camera commands issued: {stats['camera_cmds']}")
+    print(f"Vision runs: {stats['vision_runs']}")
+    print(f"Confidence updates: {stats['confidence_updates']}")
+    print(f"Range estimates: {stats['range_estimates']}")
     sys.exit(0)
 
 

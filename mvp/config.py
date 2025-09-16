@@ -1,4 +1,8 @@
 import os
+from .env_loader import load_thebox_env
+
+# Load environment variables early
+load_thebox_env()
 
 
 def getenv_bool(name: str, default: bool) -> bool:
@@ -38,5 +42,43 @@ RANGE_RSSI_REF_DBM = float(os.getenv("RANGE_RSSI_REF_DBM", "-50"))
 RANGE_RSSI_REF_KM = float(os.getenv("RANGE_RSSI_REF_KM", "2.0"))
 RANGE_MIN_KM = float(os.getenv("RANGE_MIN_KM", "0.1"))
 RANGE_MAX_KM = float(os.getenv("RANGE_MAX_KM", "8.0"))
+
+# Bearing offsets
+BOW_ZERO_DEG = float(os.getenv("BOW_ZERO_DEG", "0.0"))
+DRONESHIELD_BEARING_OFFSET_DEG = float(os.getenv("DRONESHIELD_BEARING_OFFSET_DEG", "0.0"))
+TRAKKA_BEARING_OFFSET_DEG = float(os.getenv("TRAKKA_BEARING_OFFSET_DEG", "0.0"))
+VISION_BEARING_OFFSET_DEG = float(os.getenv("VISION_BEARING_OFFSET_DEG", "0.0"))
+ACOUSTIC_BEARING_OFFSET_DEG = float(os.getenv("ACOUSTIC_BEARING_OFFSET_DEG", "0.0"))
+
+# Vision backend (ONNX Runtime CUDA on Windows)
+VISION_MODEL_PATH = os.getenv("VISION_MODEL_PATH", "")
+VISION_ROI = os.getenv("VISION_ROI", "0.0,0.0,1.0,1.0")
+VISION_FRAME_SKIP = int(os.getenv("VISION_FRAME_SKIP", "1"))
+VISION_N_CONSEC_FOR_TRUE = int(os.getenv("VISION_N_CONSEC_FOR_TRUE", "3"))
+VISION_MAX_DWELL_MS = int(os.getenv("VISION_MAX_DWELL_MS", "15000"))
+VISION_SWEEP_STEP_DEG = float(os.getenv("VISION_SWEEP_STEP_DEG", "5.0"))
+VISION_PRIORITY = int(os.getenv("VISION_PRIORITY", "1"))
+VISION_VERDICT_DEFAULT = getenv_bool("VISION_VERDICT_DEFAULT", True)
+VISION_LABEL_DEFAULT = os.getenv("VISION_LABEL_DEFAULT", "Quadcopter")
+
+# SeaCross configuration
+THEBOX_TALKER_ID = os.getenv("THEBOX_TALKER_ID", "XA")
+THEBOX_WEB_HOST = os.getenv("THEBOX_WEB_HOST", "0.0.0.0")
+THEBOX_WEB_PORT = int(os.getenv("THEBOX_WEB_PORT", "80"))
+
+# Synthetic range estimation
+THEBOX_MIN_SYNTH_RANGE_M = float(os.getenv("THEBOX_MIN_SYNTH_RANGE_M", "150"))
+THEBOX_MAX_SYNTH_RANGE_M = float(os.getenv("THEBOX_MAX_SYNTH_RANGE_M", "1500"))
+THEBOX_DEFAULT_SYNTH_RANGE_M = float(os.getenv("THEBOX_DEFAULT_SYNTH_RANGE_M", "600"))
+THEBOX_SYNTH_SMOOTHING_ALPHA = float(os.getenv("THEBOX_SYNTH_SMOOTHING_ALPHA", "0.30"))
+THEBOX_SYNTH_MIN_DIST_ERR_M = float(os.getenv("THEBOX_SYNTH_MIN_DIST_ERR_M", "150"))
+THEBOX_SYNTH_DIST_ERR_FRAC = float(os.getenv("THEBOX_SYNTH_DIST_ERR_FRAC", "0.30"))
+THEBOX_SYNTH_DEFAULT_BRG_ERR = float(os.getenv("THEBOX_SYNTH_DEFAULT_BRG_ERR", "5.0"))
+THEBOX_SYNTH_DEFAULT_ALT_M = float(os.getenv("THEBOX_SYNTH_DEFAULT_ALT_M", "0.0"))
+THEBOX_SYNTH_DEFAULT_ALT_ERR = float(os.getenv("THEBOX_SYNTH_DEFAULT_ALT_ERR", "20.0"))
+
+# State persistence
+THEBOX_STATE_PATH = os.getenv("THEBOX_STATE_PATH", "data/state.json")
+THEBOX_STATE_SAVE_EVERY_SEC = int(os.getenv("THEBOX_STATE_SAVE_EVERY_SEC", "3"))
 
 

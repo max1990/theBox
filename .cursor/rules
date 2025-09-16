@@ -139,3 +139,31 @@ When creating a new plugin:
 - Each session SHALL support a runtime “relative zero” calibration: the operator points the camera forward (bow) and calls a function to set the current azimuth as 0°. All subsequent bearing commands are interpreted relative to this zero.
 - Elevation commands MUST be clamped to the safe range (−20° .. +120°).
 - Vendor-specific protocol usage MUST remain inside the corresponding plugin module; do not propagate vendor code or assumptions into SeaCross sender or framework-level components.
+
+
+## Addendum — Vision / Confidence / Range Plugins
+
+### Env knobs (defaults)
+- Vision: `VISION_VERDICT=true`, `VISION_LABEL="Quadcopter"`, `VISION_LATENCY_MS=5000`, `VISION_MAX_MS=15000`
+- Confidence: `CONFIDENCE_BASE=0.75`, `CONFIDENCE_TRUE=1.0`, `CONFIDENCE_FALSE=0.5`
+- Range: `RANGE_MODE="fixed"` | `"rssi"` | `"hybrid"`, `RANGE_FIXED_KM=2.0`, `RANGE_RSSI_REF_DBM=-50`, `RANGE_RSSI_REF_KM=2.0`, `RANGE_MIN_KM=0.1`, `RANGE_MAX_KM=8.0`
+
+### Interfaces (contracts)
+-Vision (`plugins/vision/vision_plugin.py`):
+  ```py
+  async def run_verification(track_id: str|int, timeout_ms: int|None=None) -> VisionResult
+  ```
+- Confidence (plugins/confidence/confidence_plugin.py):
+  ```py
+  def initial_score() -> float
+  def update_after_vision(prev: float, verified: bool) -> float
+  ```
+- Range (plugins/range/range_plugin.py):
+  ```py
+  def estimate_km(signal: dict|None, bearing_deg: float|None) -> float
+  ```
+
+### Orchestration (summary)
+- First sighting → set confidence initial_score(); set range estimate_km(...); slew Trakka.
+- On slew_complete → vision; if true → bump to CONFIDENCE_TRUE, mark validated, emit CLS once; if false → no CLS/SGT (retry on next detection).
+- Validated tracks → follow-ons emit SGT only (never new CLS).
