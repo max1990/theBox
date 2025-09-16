@@ -10,11 +10,17 @@ from flask import Flask, render_template, jsonify, request
 from thebox.database import DroneDB
 from thebox.event_manager import EventManager
 from thebox.plugin_manager import PluginManager
+from webui.settings import create_settings_blueprint
+from webui.testconsole import create_testconsole_blueprint
 
 app = Flask(__name__)
 db = DroneDB()
 event_manager = EventManager(db)
 plugin_manager = PluginManager(event_manager)
+
+# Register Settings blueprint
+app.register_blueprint(create_settings_blueprint(event_manager), url_prefix="")
+app.register_blueprint(create_testconsole_blueprint(event_manager, plugin_manager), url_prefix="")
 
 @app.route('/')
 def index():

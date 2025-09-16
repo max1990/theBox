@@ -1,4 +1,4 @@
-from typing import Optional, Literal, Dict
+from typing import Optional, Literal, Dict, Tuple, Union
 from pydantic import BaseModel, Field
 
 
@@ -43,17 +43,27 @@ class SGTMessage(BaseModel):
     altitude_err_m: float
 
 
+class RangeEstimate(BaseModel):
+    """Range estimation result with uncertainty and method details"""
+    range_km: Optional[float] = None
+    sigma_km: Optional[float] = None
+    mode: str = "unknown"
+    details: Dict = Field(default_factory=dict)
+
+
 class VisionResult(BaseModel):
-    track_id: str | int
+    """Vision verification result with tracking and latency info"""
     verified: bool
-    label: str | None = None
+    label: str
     latency_ms: int
+    bbox: Optional[Tuple[float, float, float, float]] = None  # (x1, y1, x2, y2)
+    tracker: Optional[Dict] = None
 
 
 class ConfidenceUpdate(BaseModel):
-    track_id: str | int
-    previous: float
-    updated: float
+    """Confidence update with reasoning and details"""
+    confidence_0_1: float
     reason: str
+    details: Dict = Field(default_factory=dict)
 
 
