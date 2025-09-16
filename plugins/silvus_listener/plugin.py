@@ -27,8 +27,8 @@ from .live_udp_client import SilvusUDPClient, example_protobuf_decoder
 class SilvusListenerPlugin(PluginInterface):
     """Conformant plugin class for Silvus AoA ingestion."""
 
-    def __init__(self, name, event_manager):
-        super().__init__(name, event_manager)
+    def __init__(self, event_manager):
+        super().__init__(event_manager)
 
         # Read config; can be overridden via environment variables.
         self.cfg = SilvusConfig(

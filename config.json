@@ -1,8 +1,14 @@
 {
     "plugins": [
+        "confidence",
         "droneshield_listener",
         "labels_ui",
+        "persistence_disk",
+        "range",
         "seacross_sender",
-        "persistence_disk"
+        "search_planner",
+        "silvus_listener",
+        "trakka_control",
+        "vision"
     ]
 }

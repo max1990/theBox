@@ -1,4 +1,5 @@
 # Load environment early
+import os
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -14,13 +15,14 @@ from webui.settings import create_settings_blueprint
 from webui.testconsole import create_testconsole_blueprint
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key-change-in-production')
 db = DroneDB()
 event_manager = EventManager(db)
 plugin_manager = PluginManager(event_manager)
 
 # Register Settings blueprint
 app.register_blueprint(create_settings_blueprint(event_manager), url_prefix="")
-app.register_blueprint(create_testconsole_blueprint(event_manager, plugin_manager), url_prefix="")
+app.register_blueprint(create_testconsole_blueprint(event_manager, plugin_manager), url_prefix="/test")
 
 @app.route('/')
 def index():
