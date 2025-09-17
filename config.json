@@ -2,11 +2,10 @@
     "plugins": [
         "confidence",
         "droneshield_listener",
-        "labels_ui",
-        "persistence_disk",
+        "dspnor",
+        "mara",
         "range",
         "seacross_sender",
-        "search_planner",
         "silvus_listener",
         "trakka_control",
         "vision"

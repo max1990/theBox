@@ -230,3 +230,64 @@ def load_env_dict_with_fallback() -> Tuple[Path, Dict[str, str]]:
     env_path, example_path = env_paths()
     src = env_path if env_path.exists() else example_path
     return src, parse_env_file(src)
+
+
+
+def list_backups() -> list[Path]:
+    """List all backup files, sorted by creation time (newest first)"""
+    env_path, _ = env_paths()
+    backup_dir = env_path.parent
+    backups = list(backup_dir.glob(".thebox.env.bak.*"))
+    backups.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return backups
+
+
+def restore_latest_backup() -> bool:
+    """Restore the latest backup file. Returns True if successful."""
+    backups = list_backups()
+    if not backups:
+        return False
+    
+    env_path, _ = env_paths()
+    latest_backup = backups[0]
+    
+    try:
+        # Create a backup of current file before restoring
+        if env_path.exists():
+            current_backup = env_path.parent / f".thebox.env.current.{int(time.time())}"
+            shutil.copy2(env_path, current_backup)
+        
+        # Restore from backup
+        shutil.copy2(latest_backup, env_path)
+        
+        # Reload the restored environment
+        restored_env = parse_env_file(env_path)
+        reload_process_env(restored_env)
+        
+        return True
+    except Exception as e:
+        print(f"Failed to restore backup: {e}")
+        return False
+
+
+def normalize_angles(env_dict: Dict[str, str]) -> Dict[str, str]:
+    """Normalize all angle fields to [0, 360) degrees"""
+    angle_fields = [
+        'BOW_ZERO_DEG', 'DRONESHIELD_BEARING_OFFSET_DEG', 'TRAKKA_BEARING_OFFSET_DEG',
+        'VISION_BEARING_OFFSET_DEG', 'ACOUSTIC_BEARING_OFFSET_DEG', 'VISION_SWEEP_STEP_DEG'
+    ]
+    
+    result = env_dict.copy()
+    for field in angle_fields:
+        if field in result:
+            try:
+                angle = float(result[field])
+                while angle < 0:
+                    angle += 360
+                while angle >= 360:
+                    angle -= 360
+                result[field] = str(angle)
+            except (ValueError, TypeError):
+                pass  # Keep original value if not a number
+    
+    return result
