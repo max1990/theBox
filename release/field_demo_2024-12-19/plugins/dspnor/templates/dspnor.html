@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dspnor Plugin - Dronnur-2D Naval LPI/LPD Radar</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        .dspnor-page {
+            color: var(--primary, #0d6efd);
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .status-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        .status-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .metric-value {
+            font-weight: bold;
+        }
+        .health-good { color: #28a745; }
+        .health-warning { color: #ffc107; }
+        .health-error { color: #dc3545; }
+        .unit-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .unit-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+        }
+        .unit-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .unit-details {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .danger-zone {
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            background: #fff5f5;
+        }
+        .danger-zone h3 {
+            color: #dc3545;
+            margin-top: 0;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-danger:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .refresh-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container dspnor-page">
+        <h1>Dspnor Plugin - Dronnur-2D Naval LPI/LPD Radar</h1>
+        
+        <div class="status-grid">
+            <!-- Plugin Status -->
+            <div class="status-card">
+                <h3>Plugin Status</h3>
+                <div class="metric">
+                    <span>Enabled:</span>
+                    <span class="metric-value" id="enabled">-</span>
+                </div>
+                <div class="metric">
+                    <span>Running:</span>
+                    <span class="metric-value" id="running">-</span>
+                </div>
+                <div class="metric">
+                    <span>Safe Mode:</span>
+                    <span class="metric-value" id="safe_mode">-</span>
+                </div>
+                <div class="metric">
+                    <span>Health Status:</span>
+                    <span class="metric-value" id="health_status">-</span>
+                </div>
+            </div>
+            
+            <!-- Connections -->
+            <div class="status-card">
+                <h3>Connections</h3>
+                <div class="metric">
+                    <span>Discovery:</span>
+                    <span class="metric-value" id="discovery_conn">-</span>
+                </div>
+                <div class="metric">
+                    <span>Info TCP:</span>
+                    <span class="metric-value" id="info_conn">-</span>
+                </div>
+                <div class="metric">
+                    <span>CAT-010 UDP:</span>
+                    <span class="metric-value" id="cat010_conn">-</span>
+                </div>
+                <div class="metric">
+                    <span>NMEA UDP:</span>
+                    <span class="metric-value" id="nmea_conn">-</span>
+                </div>
+            </div>
+            
+            <!-- Current Data -->
+            <div class="status-card">
+                <h3>Current Data</h3>
+                <div class="metric">
+                    <span>Heading:</span>
+                    <span class="metric-value" id="current_heading">-</span>
+                </div>
+                <div class="metric">
+                    <span>Position:</span>
+                    <span class="metric-value" id="current_position">-</span>
+                </div>
+                <div class="metric">
+                    <span>Velocity:</span>
+                    <span class="metric-value" id="current_velocity">-</span>
+                </div>
+            </div>
+            
+            <!-- Message Counters -->
+            <div class="status-card">
+                <h3>Message Counters</h3>
+                <div class="metric">
+                    <span>Messages OK:</span>
+                    <span class="metric-value" id="messages_ok">0</span>
+                </div>
+                <div class="metric">
+                    <span>Messages Bad:</span>
+                    <span class="metric-value" id="messages_bad">0</span>
+                </div>
+                <div class="metric">
+                    <span>Detections Out:</span>
+                    <span class="metric-value" id="detections_out">0</span>
+                </div>
+                <div class="metric">
+                    <span>Reconnects:</span>
+                    <span class="metric-value" id="reconnects">0</span>
+                </div>
+                <div class="metric">
+                    <span>Overrate Drops:</span>
+                    <span class="metric-value" id="overrate_drops">0</span>
+                </div>
+            </div>
+            
+            <!-- Data Counters -->
+            <div class="status-card">
+                <h3>Data Counters</h3>
+                <div class="metric">
+                    <span>CAT-010 Bytes:</span>
+                    <span class="metric-value" id="cat010_bytes">0</span>
+                </div>
+                <div class="metric">
+                    <span>NMEA Messages:</span>
+                    <span class="metric-value" id="nmea_msgs">0</span>
+                </div>
+                <div class="metric">
+                    <span>Avg Parse Time:</span>
+                    <span class="metric-value" id="avg_parse_time">0 ms</span>
+                </div>
+            </div>
+            
+            <!-- Age Tracking -->
+            <div class="status-card">
+                <h3>Data Age</h3>
+                <div class="metric">
+                    <span>Last Status:</span>
+                    <span class="metric-value" id="last_status_age">-</span>
+                </div>
+                <div class="metric">
+                    <span>Last Discovery:</span>
+                    <span class="metric-value" id="last_discovery_age">-</span>
+                </div>
+                <div class="metric">
+                    <span>Last CAT-010:</span>
+                    <span class="metric-value" id="last_cat010_age">-</span>
+                </div>
+                <div class="metric">
+                    <span>Last NMEA:</span>
+                    <span class="metric-value" id="last_nmea_age">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Discovered Units -->
+        <div class="status-card">
+            <h3>Discovered Units</h3>
+            <div class="unit-list" id="unit_list">
+                <p>No units discovered</p>
+            </div>
+        </div>
+        
+        <!-- Danger Zone -->
+        <div class="danger-zone">
+            <h3>⚠️ Danger Zone - Unit Control</h3>
+            <p><strong>Warning:</strong> These operations can disrupt radar operation and should only be used by authorized personnel.</p>
+            <div>
+                <button class="btn-danger" id="reset_btn" onclick="resetUnit()" disabled>
+                    Reset Unit
+                </button>
+                <button class="btn-danger" id="reboot_btn" onclick="rebootUnit()" disabled>
+                    Reboot Unit
+                </button>
+            </div>
+            <p><small>These buttons are disabled by default for safety. Enable via environment variables.</small></p>
+        </div>
+        
+        <button class="refresh-btn" onclick="refreshStatus()">Refresh Status</button>
+    </div>
+
+    <script>
+        let statusData = {};
+        
+        function refreshStatus() {
+            fetch('./status')
+                .then(response => response.json())
+                .then(data => {
+                    statusData = data;
+                    updateDisplay();
+                })
+                .catch(error => {
+                    console.error('Error fetching status:', error);
+                });
+        }
+        
+        function updateDisplay() {
+            // Plugin status
+            document.getElementById('enabled').textContent = statusData.enabled ? 'Yes' : 'No';
+            document.getElementById('running').textContent = statusData.running ? 'Yes' : 'No';
+            document.getElementById('safe_mode').textContent = statusData.safe_mode ? 'Yes' : 'No';
+            
+            const healthStatus = document.getElementById('health_status');
+            healthStatus.textContent = statusData.health_status || 'Unknown';
+            healthStatus.className = 'metric-value health-' + (statusData.health_status || 'unknown');
+            
+            // Connections
+            const connections = statusData.metrics?.connections || {};
+            document.getElementById('discovery_conn').textContent = connections.discovery ? 'Connected' : 'Disconnected';
+            document.getElementById('info_conn').textContent = connections.info ? 'Connected' : 'Disconnected';
+            document.getElementById('cat010_conn').textContent = connections.cat010 ? 'Connected' : 'Disconnected';
+            document.getElementById('nmea_conn').textContent = connections.nmea ? 'Connected' : 'Disconnected';
+            
+            // Current data
+            document.getElementById('current_heading').textContent = 
+                statusData.current_heading ? statusData.current_heading.toFixed(1) + '°' : 'N/A';
+            document.getElementById('current_position').textContent = 
+                statusData.current_position ? 
+                statusData.current_position[0].toFixed(6) + ', ' + statusData.current_position[1].toFixed(6) : 'N/A';
+            document.getElementById('current_velocity').textContent = 
+                statusData.current_velocity ? 
+                statusData.current_velocity[0].toFixed(1) + ' m/s @ ' + statusData.current_velocity[1].toFixed(1) + '°' : 'N/A';
+            
+            // Message counters
+            const metrics = statusData.metrics || {};
+            document.getElementById('messages_ok').textContent = metrics.messages_ok || 0;
+            document.getElementById('messages_bad').textContent = metrics.messages_bad || 0;
+            document.getElementById('detections_out').textContent = metrics.detections_out || 0;
+            document.getElementById('reconnects').textContent = metrics.reconnects || 0;
+            document.getElementById('overrate_drops').textContent = metrics.overrate_drops || 0;
+            
+            // Data counters
+            document.getElementById('cat010_bytes').textContent = (metrics.cat010_bytes_in || 0).toLocaleString();
+            document.getElementById('nmea_msgs').textContent = metrics.nmea_msgs || 0;
+            document.getElementById('avg_parse_time').textContent = 
+                (metrics.performance?.avg_parse_time_ms || 0).toFixed(2) + ' ms';
+            
+            // Age tracking
+            document.getElementById('last_status_age').textContent = 
+                formatAge(metrics.last_status_age_s);
+            document.getElementById('last_discovery_age').textContent = 
+                formatAge(metrics.last_discovery_age_s);
+            document.getElementById('last_cat010_age').textContent = 
+                formatAge(metrics.last_cat010_age_s);
+            document.getElementById('last_nmea_age').textContent = 
+                formatAge(metrics.last_nmea_age_s);
+            
+            // Discovered units
+            updateUnitList();
+            
+            // Enable/disable danger buttons
+            updateDangerButtons();
+        }
+        
+        function formatAge(seconds) {
+            if (seconds === null || seconds === undefined) return 'Never';
+            if (seconds < 60) return seconds.toFixed(1) + 's';
+            if (seconds < 3600) return (seconds / 60).toFixed(1) + 'm';
+            return (seconds / 3600).toFixed(1) + 'h';
+        }
+        
+        function updateUnitList() {
+            const unitList = document.getElementById('unit_list');
+            const units = statusData.discovered_units || {};
+            
+            if (Object.keys(units).length === 0) {
+                unitList.innerHTML = '<p>No units discovered</p>';
+                return;
+            }
+            
+            let html = '';
+            for (const [serial, unit] of Object.entries(units)) {
+                html += `
+                    <div class="unit-item">
+                        <div class="unit-name">${unit.unit_name}</div>
+                        <div class="unit-details">
+                            Serial: ${serial}<br>
+                            IP: ${unit.ip_address}<br>
+                            Firmware: ${unit.firmware_version}<br>
+                            Capabilities: ${unit.capabilities.join(', ')}<br>
+                            Last Seen: ${new Date(unit.last_seen).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }
+            unitList.innerHTML = html;
+        }
+        
+        function updateDangerButtons() {
+            // These would be enabled based on environment variables
+            // For now, keep them disabled for safety
+            document.getElementById('reset_btn').disabled = true;
+            document.getElementById('reboot_btn').disabled = true;
+        }
+        
+        function resetUnit() {
+            if (confirm('Are you sure you want to reset the unit? This may disrupt radar operation.')) {
+                const units = statusData.discovered_units || {};
+                const unitIps = Object.values(units).map(u => u.ip_address);
+                
+                if (unitIps.length === 0) {
+                    alert('No units available for reset');
+                    return;
+                }
+                
+                // For now, just show an alert since we don't have the actual unit IP selection
+                alert('Reset functionality requires unit IP selection. This would reset unit at: ' + unitIps[0]);
+            }
+        }
+        
+        function rebootUnit() {
+            if (confirm('Are you sure you want to reboot the unit? This will completely restart the radar system.')) {
+                const units = statusData.discovered_units || {};
+                const unitIps = Object.values(units).map(u => u.ip_address);
+                
+                if (unitIps.length === 0) {
+                    alert('No units available for reboot');
+                    return;
+                }
+                
+                // For now, just show an alert since we don't have the actual unit IP selection
+                alert('Reboot functionality requires unit IP selection. This would reboot unit at: ' + unitIps[0]);
+            }
+        }
+        
+        // Auto-refresh every 5 seconds
+        setInterval(refreshStatus, 5000);
+        
+        // Initial load
+        refreshStatus();
+    </script>
+</body>
+</html>

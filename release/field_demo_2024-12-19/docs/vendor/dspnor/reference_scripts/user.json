@@ -1,0 +1,203 @@
+{
+    "Services": {
+        "ADSBInternal": {
+            "Enabled": false,
+            "IP": "",
+            "Port": 0,
+            "Protocol": "TCP"
+        },
+        "AISInternal": {
+            "Enabled": false,
+            "IP": "225.0.0.2",
+            "Port": 4442,
+            "Protocol": "UDP"
+        },
+        "AsterixCat010": {
+            "Enabled": true,
+            "IP": "192.168.4.100",
+            "Port": 25563,
+            "Protocol": "UDP"
+        },
+        "AsterixCat240": {
+            "Enabled": false,
+            "IP": "",
+            "Port": 0,
+            "Protocol": "TCP"
+        },
+        "AsterixCat253": {
+            "Enabled": false,
+            "IP": "",
+            "Port": 0,
+            "Protocol": "TCP"
+        },
+        "EsmDetected": {
+            "Enabled": false,
+            "IP": "",
+            "Port": 0,
+            "Protocol": "TCP"
+        },
+        "ExternalGNS": {
+            "Enabled": true,
+            "IP": "192.168.4.105",
+            "Port": 8113,
+            "Protocol": "UDP"
+        },
+        "ExternalINS": {
+            "Enabled": false,
+            "IP": "",
+            "Port": 0,
+            "Protocol": "TCP"
+        },
+        "NMEATTM": {
+            "Enabled": false,
+            "IP": "",
+            "Port": 0,
+            "Protocol": "TCP"
+        },
+        "Syslog": {
+            "Enabled": false,
+            "IP": "",
+            "Port": 0,
+            "Protocol": "TCP"
+        }
+    },
+    "dspnor.asterix010_server": [
+        {
+            "IpAddress": "192.168.4.100",
+            "Name": "A010Server",
+            "Port": 25563,
+            "PositionSource": {
+                "source type": "sensor_source",
+                "source value": "D2D D2D_Sensors"
+            },
+            "TrackSource": {
+                "source type": "track_source",
+                "source value": "Tracker"
+            }
+        }
+    ],
+    "dspnor.dronnur_extractor": [
+        {
+            "AzimuthOffset": 0.0,
+            "ImageSource": {
+                "source type": "image_source",
+                "source value": "DronnurVideoParser Processed"
+            },
+            "MaxRange": 19000.0,
+            "MaxValue": 25.0,
+            "MinRange": 500.0,
+            "MinSize": 10.0,
+            "MinValue": 1.0,
+            "Name": "Extractor",
+            "PositionSource": {
+                "source type": "sensor_source",
+                "source value": "D2D D2D_Sensors"
+            },
+            "Threshold": 0.50399997949600217
+        }
+    ],
+    "dspnor.dronnur_tracker": [
+        {
+            "MaxDist": 24.0,
+            "MaxSpeed": 200.0,
+            "Name": "Tracker",
+            "PlotSource": {
+                "source type": "plot_source",
+                "source value": "Extractor Plots"
+            },
+            "PositionSource": {
+                "source type": "sensor_source",
+                "source value": "D2D D2D_Sensors"
+            },
+            "ScansToReport": 3
+        }
+    ],
+    "dspnor.dronnurclient": [
+        {
+            "AzimuthOffset": 0.0,
+            "InputStream": {
+                "source type": "iostream",
+                "source value": "UDP_IN_VIDEO OutputStream"
+            },
+            "MaxCenterValue": 30.0,
+            "MaxValue": 30.0,
+            "MinCenterValue": 22.0,
+            "MinValue": 22.0,
+            "Name": "DronnurVideoParser",
+            "PositionSource": {
+                "source type": "sensor_source",
+                "source value": "D2D D2D_Sensors"
+            },
+            "Recalibrate": false,
+            "SampleOffset": -60
+        }
+    ],
+    "dspnor.heading_dumper": [
+        {
+            "Name": "HDT_DMP",
+            "PositionSource": {
+                "source type": "sensor_source",
+                "source value": "D2D D2D_Sensors"
+            }
+        }
+    ],
+    "dspnor.nmea_client": [
+        {
+            "Filter": [],
+            "InputStream": {
+                "source type": "iostream",
+                "source value": "NMEA_UDP_IN_GNS OutputStream"
+            },
+            "LogSentences": true,
+            "Name": "NMEA_GNS",
+            "RequireChecksum": false
+        },
+        {
+            "Filter": [],
+            "InputStream": {
+                "source type": "iostream",
+                "source value": "NMEA_UDP_IN_INS OutputStream"
+            },
+            "LogSentences": true,
+            "Name": "NMEA_INS",
+            "RequireChecksum": false
+        }
+    ],
+    "dspnor.syslog_client": [
+        {
+            "IpAddress": "127.0.0.1",
+            "Name": "Syslog",
+            "NetworkInterface": "",
+            "Port": 514
+        }
+    ],
+    "dspnor.udp_input": [
+        {
+            "BytesIn": 174.0,
+            "BytesOut": 174.0,
+            "IP": "192.168.4.105",
+            "Listen": true,
+            "NIC": "",
+            "Name": "NMEA_UDP_IN_GNS",
+            "Port": 8113
+        },
+        {
+            "BytesIn": 0.0,
+            "BytesOut": 0.0,
+            "IP": "",
+            "Listen": false,
+            "NIC": "",
+            "Name": "NMEA_UDP_IN_INS",
+            "Port": 0
+        },
+        {
+            "BytesIn": 1446666.0,
+            "BytesOut": 1446666.0,
+            "IP": "/tmp/stream",
+            "Listen": true,
+            "NIC": "",
+            "Name": "UDP_IN_VIDEO",
+            "Port": 0
+        }
+    ]
+}

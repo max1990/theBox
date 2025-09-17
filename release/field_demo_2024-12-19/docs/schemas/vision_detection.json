@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "string"
+    },
+    "bearing_deg": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 360
+    },
+    "verified": {
+      "type": "boolean"
+    },
+    "label": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": [
+    "timestamp",
+    "bearing_deg",
+    "verified"
+  ]
+}

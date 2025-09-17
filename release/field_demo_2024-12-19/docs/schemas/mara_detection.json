@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "string"
+    },
+    "bearing_deg": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 360
+    },
+    "range_m": {
+      "type": "number",
+      "minimum": 0
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "sensor_type": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "timestamp",
+    "bearing_deg"
+  ]
+}

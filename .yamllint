@@ -1,0 +1,276 @@
+extends: default
+
+rules:
+  # Line length
+  line-length:
+    max: 120
+    level: warning
+
+  # Indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Comments
+  comments:
+    min-spaces-from-content: 1
+
+  # Document start
+  document-start:
+    present: false
+
+  # Empty lines
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 0
+
+  # Empty values
+  empty-values:
+    forbid-in-block-mappings: true
+    forbid-in-flow-mappings: true
+
+  # Hyphens
+  hyphens:
+    max-spaces-after: 1
+
+  # Key duplicates
+  key-duplicates:
+    check-in-block-mappings: true
+    check-in-flow-mappings: true
+
+  # Key ordering
+  key-ordering:
+    sort-keys: true
+
+  # Octal values
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+
+  # Quoted strings
+  quoted-strings:
+    quote-type: single
+    check-keys: false
+
+  # Truthy
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+
+  # Brackets
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Braces
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Colons
+  colons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Commas
+  commas:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Dashes
+  dashes:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Dots
+  dots:
+    max-spaces-before: 0
+    max-spaces-after: 0
+
+  # Hash
+  hash:
+    min-spaces-before: 1
+
+  # Percent
+  percent:
+    max-spaces-before: 1
+
+  # Pipes
+  pipes:
+    min-spaces-before: 1
+    min-spaces-after: 1
+
+  # Question marks
+  question-marks:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Semicolons
+  semicolons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Tildes
+  tildes:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Exclamation marks
+  exclamation-marks:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Ampersands
+  ampersands:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Asterisks
+  asterisks:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Greater than
+  greater-than:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Less than
+  less-than:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Equals
+  equals:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Plus
+  plus:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Minus
+  minus:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Slash
+  slash:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Backslash
+  backslash:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Caret
+  caret:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Dollar
+  dollar:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # At
+  at:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Hash
+  hash:
+    min-spaces-before: 1
+
+  # Percent
+  percent:
+    max-spaces-before: 1
+
+  # Pipes
+  pipes:
+    min-spaces-before: 1
+    min-spaces-after: 1
+
+  # Question marks
+  question-marks:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Semicolons
+  semicolons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Tildes
+  tildes:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Exclamation marks
+  exclamation-marks:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  # Ampersands
+  ampersands:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Asterisks
+  asterisks:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Greater than
+  greater-than:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Less than
+  less-than:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Equals
+  equals:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Plus
+  plus:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Minus
+  minus:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Slash
+  slash:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Backslash
+  backslash:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Caret
+  caret:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # Dollar
+  dollar:
+    max-spaces-before: 1
+    max-spaces-after: 1
+
+  # At
+  at:
+    max-spaces-before: 1
+    max-spaces-after: 1

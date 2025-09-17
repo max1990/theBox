@@ -1,0 +1,85 @@
+# TheBox Workstation Dockerfile
+# For Windows + NVIDIA RTX (CUDA) environments
+# Supports GPU acceleration for vision processing
+
+FROM nvidia/cuda:11.8-devel-ubuntu22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
+    python3-venv \
+    build-essential \
+    cmake \
+    pkg-config \
+    libjpeg-dev \
+    libtiff5-dev \
+    libpng-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libswscale-dev \
+    libv4l-dev \
+    libxvidcore-dev \
+    libx264-dev \
+    libgtk-3-dev \
+    libatlas-base-dev \
+    gfortran \
+    wget \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /app
+
+# Copy requirements files
+COPY requirements.txt requirements-dev.txt requirements-gpu.txt ./
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+
+# Install base requirements
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Install GPU requirements
+RUN pip3 install --no-cache-dir -r requirements-gpu.txt
+
+# Install development requirements (optional)
+RUN pip3 install --no-cache-dir -r requirements-dev.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /app/data /app/logs /app/env
+
+# Set up environment
+RUN echo "SECRET_KEY=production-key-change-me" > /app/env/.thebox.env && \
+    echo "THEBOX_WEB_HOST=0.0.0.0" >> /app/env/.thebox.env && \
+    echo "THEBOX_WEB_PORT=80" >> /app/env/.thebox.env && \
+    echo "VISION_BACKEND=onnxruntime" >> /app/env/.thebox.env && \
+    echo "VISION_MODEL_PATH=" >> /app/env/.thebox.env
+
+# Create non-root user
+RUN useradd -m -u 1000 thebox && \
+    chown -R thebox:thebox /app
+
+# Switch to non-root user
+USER thebox
+
+# Expose ports
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python3 scripts/health_check.py --host 127.0.0.1 --port 80 --timeout 5
+
+# Default command
+CMD ["python3", "app.py"]

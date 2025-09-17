@@ -1,0 +1,63 @@
+# TheBox Docker Compose Configuration for Jetson
+# Optimized for NVIDIA Jetson (L4T/JetPack) environments
+
+version: '3.8'
+
+services:
+  thebox:
+    build:
+      context: .
+      dockerfile: Dockerfile.jetson
+    container_name: thebox-jetson
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8888:8888"    # DroneShield
+      - "50051:50051"  # Silvus
+      - "8787:8787"    # MARA
+      - "4010:4010"    # Dspnor CAT010
+      - "60000:60000"  # Dspnor NMEA
+      - "62000:62000"  # SeaCross
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-production-key-change-me}
+      - THEBOX_WEB_HOST=0.0.0.0
+      - THEBOX_WEB_PORT=80
+      - VISION_BACKEND=onnxruntime
+      - VISION_MODEL_PATH=${VISION_MODEL_PATH:-}
+      - VISION_INPUT_RES=640
+      - DRONESHIELD_UDP_PORT=8888
+      - SILVUS_UDP_PORT=50051
+      - MARA_UDP_PORT=8787
+      - DSPNOR_CAT010_PORT=4010
+      - DSPNOR_NMEA_UDP_PORT=60000
+      - SEACROSS_PORT=62000
+      # Jetson-specific optimizations
+      - CUDA_VISIBLE_DEVICES=0
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./env:/app/env
+      # Mount Jetson-specific directories
+      - /dev:/dev:rw
+      - /sys:/sys:ro
+    networks:
+      - thebox-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    privileged: true  # Required for Jetson hardware access
+    healthcheck:
+      test: ["python3", "scripts/health_check.py", "--host", "127.0.0.1", "--port", "80", "--timeout", "5"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # Longer start period for Jetson
+
+networks:
+  thebox-network:
+    driver: bridge

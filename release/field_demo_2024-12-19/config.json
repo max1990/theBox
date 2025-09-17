@@ -1,0 +1,13 @@
+{
+    "plugins": [
+        "confidence",
+        "droneshield_listener",
+        "dspnor",
+        "mara",
+        "range",
+        "seacross_sender",
+        "silvus_listener",
+        "trakka_control",
+        "vision"
+    ]
+}

@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "detection": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string"
+        },
+        "bearing": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360
+        },
+        "rssi": {
+          "type": "number"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "timestamp",
+        "bearing"
+      ]
+    }
+  },
+  "required": [
+    "detection"
+  ]
+}

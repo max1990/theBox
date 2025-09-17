@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "properties": {
+    "track_id": {
+      "type": "string"
+    },
+    "confidence_0_1": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "reason": {
+      "type": "string"
+    },
+    "details": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "track_id",
+    "confidence_0_1",
+    "reason"
+  ]
+}

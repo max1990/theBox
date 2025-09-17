@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "time_utc": {
+      "type": "string"
+    },
+    "freq_mhz": {
+      "type": "number"
+    },
+    "bearing_deg_true": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 360
+    },
+    "bearing_error_deg": {
+      "type": "number",
+      "minimum": 0
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": [
+    "time_utc",
+    "bearing_deg_true"
+  ]
+}

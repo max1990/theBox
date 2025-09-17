@@ -1,37 +1,36 @@
 import json
 import logging
-import os
 import sys
 import time
 from datetime import datetime, timezone
 
 from mvp.config import (
+    DB_PATH,
+    DEFAULT_CONFIDENCE,
     DRONESHIELD_INPUT_FILE,
     DRONESHIELD_UDP_PORT,
     REPLAY_INTERVAL_MS,
-    CAMERA_CONNECTED,
-    SEARCH_VERDICT,
-    SEARCH_DURATION_MS,
-    SEARCH_MAX_MS,
-    DEFAULT_CONFIDENCE,
-    RANGE_FIXED_KM,
-    DB_PATH,
     SEACROSS_HOST,
     SEACROSS_PORT,
+    SEARCH_DURATION_MS,
+    SEARCH_MAX_MS,
+    SEARCH_VERDICT,
 )
 from mvp.db_adapter import DBAdapter
 from mvp.plugins.droneshield_listener.udp_listener import DroneShieldUDPListener
-from mvp.plugins.search.search_stub import SearchStub
 from mvp.plugins.seacross.seacross_adapter import SeaCrossAdapter
+from mvp.plugins.search.search_stub import SearchStub
 from mvp.schemas import CLSMessage, SGTMessage
-from scripts.udp_replay import replay
-from plugins.vision.vision_plugin import VisionPlugin
 from plugins.confidence.confidence_plugin import ConfidencePlugin
 from plugins.range.range_plugin import RangePlugin
+from plugins.vision.vision_plugin import VisionPlugin
+from scripts.udp_replay import replay
 
 
 def main():
-    logging.basicConfig(filename="mvp_demo.log", level=logging.INFO, format="%(asctime)s %(message)s")
+    logging.basicConfig(
+        filename="mvp_demo.log", level=logging.INFO, format="%(asctime)s %(message)s"
+    )
     stats = {
         "camera_cmds": 0,
         "cls": 0,
@@ -74,7 +73,9 @@ def main():
             # reset status to force re-validate next time
             pass
 
-    search = SearchStub(SEARCH_VERDICT, SEARCH_DURATION_MS, SEARCH_MAX_MS, on_result=on_search_result)
+    search = SearchStub(
+        SEARCH_VERDICT, SEARCH_DURATION_MS, SEARCH_MAX_MS, on_result=on_search_result
+    )
 
     def on_detection(det):
         # Track upsert
@@ -91,11 +92,14 @@ def main():
             stats["range"] += 1
             stats["range_estimates"] += 1
         # Record detection
-        db.insert_detection(track_id, det.dict(), DEFAULT_CONFIDENCE, json.dumps(det.dict()))
+        db.insert_detection(
+            track_id, det.dict(), DEFAULT_CONFIDENCE, json.dumps(det.dict())
+        )
 
         # Trakka slew (adapter)
         stats["camera_cmds"] += 1
         latest_bearing_per_track[track_id] = float(det.bearing_deg)
+
         # Immediately mark slew complete and start search
         async def do_vision_and_search():
             nonlocal track_id
@@ -111,7 +115,9 @@ def main():
                 new_conf = confidence.update_after_vision(prev_conf, False)
                 stats["confidence_updates"] += 1
                 db.update_track_confidence(track_id, new_conf)
+
         import asyncio
+
         asyncio.run(do_vision_and_search())
 
         # If validated already, emit SGT per detection
@@ -144,7 +150,7 @@ def main():
     listener.stop()
 
     summary = db.summary()
-    
+
     # Log counters to mvp_demo.log
     log = logging.getLogger("mvp_demo")
     log.info("=== MVP DEMO COUNTERS ===")
@@ -156,7 +162,7 @@ def main():
     log.info(f"cls_emitted: {stats['cls']}")
     log.info(f"sgt_emitted: {stats['sgt']}")
     log.info(f"camera_commands: {stats['camera_cmds']}")
-    
+
     print("=== MVP DEMO PASSED ===")
     print(f"Tracks created: {summary['tracks']}")
     print(f"Detections ingested: {summary['detections']}")
@@ -173,5 +179,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -1,0 +1,7 @@
+Network address to stream Trakka-feed.
+
+rtsp://192.168.1.59/net0
+
+http:/169.254.1.181/16   or 8080
+
+udp://@:15004 - Working

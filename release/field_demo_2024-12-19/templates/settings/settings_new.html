@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - The Box</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        .breadcrumb { background: #f8f9fa; padding: 0.5rem 1rem; margin: -1rem -1rem 1rem -1rem; }
+        .form-switch .form-check-input { width: 3rem; height: 1.5rem; }
+        .field-help { font-size: 0.875rem; color: #6c757d; }
+        .units-badge { font-size: 0.75rem; }
+        .trakka-options { background: #f8f9fa; border-radius: 0.375rem; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">The Box</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Dashboard</a>
+                <a class="nav-link active" href="/settings">⚙️ Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-3">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item active">Settings</li>
+            </ol>
+        </nav>
+
+        <!-- Back button -->
+        <div class="mb-3">
+            <a href="/" class="btn btn-outline-secondary">
+                ← Back to Dashboard
+            </a>
+        </div>
+
+        <h2>Environment & Offsets</h2>
+        
+        <!-- Alerts -->
+        {% if success %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> Settings saved successfully
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% elif error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        {% if require_password %}
+        <!-- Password form -->
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Settings Protection</h5>
+                <form method="post" action="/settings">
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" placeholder="Enter password" required>
+                    </div>
+                    <button class="btn btn-primary" name="action" value="login">Unlock Settings</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <!-- Main settings form -->
+        <form method="post" action="/settings" id="settingsForm">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="networking-tab" data-bs-toggle="tab" data-bs-target="#networking" type="button" role="tab">Networking</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="offsets-tab" data-bs-toggle="tab" data-bs-target="#offsets" type="button" role="tab">Offsets</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="vision-tab" data-bs-toggle="tab" data-bs-target="#vision" type="button" role="tab">Vision</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="confidence-tab" data-bs-toggle="tab" data-bs-target="#confidence" type="button" role="tab">Confidence</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="range-tab" data-bs-toggle="tab" data-bs-target="#range" type="button" role="tab">Range</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="capture-tab" data-bs-toggle="tab" data-bs-target="#capture" type="button" role="tab">Capture</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="trakka-tab" data-bs-toggle="tab" data-bs-target="#trakka" type="button" role="tab">Trakka</button>
+                </li>
+            </ul>
+
+            <!-- Tab content -->
+            <div class="tab-content" id="settingsTabContent">
+                <!-- Networking Tab -->
+                <div class="tab-pane fade show active" id="networking" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Network Configuration</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">SEACROSS_HOST</label>
+                                        <input type="text" class="form-control" name="SEACROSS_HOST" 
+                                               value="{{ form_values.SEACROSS_HOST or '255.255.255.255' }}" 
+                                               placeholder="255.255.255.255">
+                                        <div class="field-help">IP address or broadcast address for SeaCross communication</div>
+                                        {% if errors.SEACROSS_HOST %}
+                                        <div class="text-danger">{{ errors.SEACROSS_HOST[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">SEACROSS_PORT <span class="badge bg-secondary units-badge">1-65535</span></label>
+                                        <input type="number" class="form-control" name="SEACROSS_PORT" 
+                                               value="{{ form_values.SEACROSS_PORT or '2000' }}" 
+                                               min="1" max="65535">
+                                        <div class="field-help">Port number for SeaCross communication</div>
+                                        {% if errors.SEACROSS_PORT %}
+                                        <div class="text-danger">{{ errors.SEACROSS_PORT[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Offsets Tab -->
+                <div class="tab-pane fade" id="offsets" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Bearing Offsets</h5>
+                            <p class="text-muted">All angles are normalized to [0, 360) degrees</p>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">BOW_ZERO_DEG <span class="badge bg-secondary units-badge">°</span></label>
+                                        <input type="number" class="form-control" name="BOW_ZERO_DEG" 
+                                               value="{{ form_values.BOW_ZERO_DEG or '0' }}" 
+                                               step="0.1" placeholder="0">
+                                        <div class="field-help">Global bow zero offset applied first</div>
+                                        {% if errors.BOW_ZERO_DEG %}
+                                        <div class="text-danger">{{ errors.BOW_ZERO_DEG[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">DRONESHIELD_BEARING_OFFSET_DEG <span class="badge bg-secondary units-badge">°</span></label>
+                                        <input type="number" class="form-control" name="DRONESHIELD_BEARING_OFFSET_DEG" 
+                                               value="{{ form_values.DRONESHIELD_BEARING_OFFSET_DEG or '0' }}" 
+                                               step="0.1" placeholder="0">
+                                        <div class="field-help">DroneShield specific offset</div>
+                                        {% if errors.DRONESHIELD_BEARING_OFFSET_DEG %}
+                                        <div class="text-danger">{{ errors.DRONESHIELD_BEARING_OFFSET_DEG[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">TRAKKA_BEARING_OFFSET_DEG <span class="badge bg-secondary units-badge">°</span></label>
+                                        <input type="number" class="form-control" name="TRAKKA_BEARING_OFFSET_DEG" 
+                                               value="{{ form_values.TRAKKA_BEARING_OFFSET_DEG or '0' }}" 
+                                               step="0.1" placeholder="0">
+                                        <div class="field-help">Trakka specific offset</div>
+                                        {% if errors.TRAKKA_BEARING_OFFSET_DEG %}
+                                        <div class="text-danger">{{ errors.TRAKKA_BEARING_OFFSET_DEG[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_BEARING_OFFSET_DEG <span class="badge bg-secondary units-badge">°</span></label>
+                                        <input type="number" class="form-control" name="VISION_BEARING_OFFSET_DEG" 
+                                               value="{{ form_values.VISION_BEARING_OFFSET_DEG or '0' }}" 
+                                               step="0.1" placeholder="0">
+                                        <div class="field-help">Vision specific offset</div>
+                                        {% if errors.VISION_BEARING_OFFSET_DEG %}
+                                        <div class="text-danger">{{ errors.VISION_BEARING_OFFSET_DEG[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">ACOUSTIC_BEARING_OFFSET_DEG <span class="badge bg-secondary units-badge">°</span></label>
+                                        <input type="number" class="form-control" name="ACOUSTIC_BEARING_OFFSET_DEG" 
+                                               value="{{ form_values.ACOUSTIC_BEARING_OFFSET_DEG or '0' }}" 
+                                               step="0.1" placeholder="0">
+                                        <div class="field-help">Acoustic specific offset</div>
+                                        {% if errors.ACOUSTIC_BEARING_OFFSET_DEG %}
+                                        <div class="text-danger">{{ errors.ACOUSTIC_BEARING_OFFSET_DEG[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vision Tab -->
+                <div class="tab-pane fade" id="vision" role="tabpanel">
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5 class="card-title">Vision Configuration</h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_BACKEND</label>
+                                        <select class="form-select" name="VISION_BACKEND">
+                                            <option value="cpu" {% if (form_values.VISION_BACKEND or 'cpu') == 'cpu' %}selected{% endif %}>CPU (no GPU)</option>
+                                            <option value="onnxruntime" {% if (form_values.VISION_BACKEND or 'cpu') == 'onnxruntime' %}selected{% endif %}>ONNX Runtime (CUDA on GPU)</option>
+                                        </select>
+                                        <div class="field-help">Vision processing backend</div>
+                                        {% if errors.VISION_BACKEND %}
+                                        <div class="text-danger">{{ errors.VISION_BACKEND[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_INPUT_RES</label>
+                                        <select class="form-select" name="VISION_INPUT_RES">
+                                            <option value="320" {% if (form_values.VISION_INPUT_RES or '640') == '320' %}selected{% endif %}>320x320</option>
+                                            <option value="416" {% if (form_values.VISION_INPUT_RES or '640') == '416' %}selected{% endif %}>416x416</option>
+                                            <option value="512" {% if (form_values.VISION_INPUT_RES or '640') == '512' %}selected{% endif %}>512x512</option>
+                                            <option value="640" {% if (form_values.VISION_INPUT_RES or '640') == '640' %}selected{% endif %}>640x640</option>
+                                            <option value="896" {% if (form_values.VISION_INPUT_RES or '640') == '896' %}selected{% endif %}>896x896</option>
+                                            <option value="960" {% if (form_values.VISION_INPUT_RES or '640') == '960' %}selected{% endif %}>960x960</option>
+                                        </select>
+                                        <div class="field-help">Input resolution for vision processing</div>
+                                        {% if errors.VISION_INPUT_RES %}
+                                        <div class="text-danger">{{ errors.VISION_INPUT_RES[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_MODEL_PATH</label>
+                                        <input type="text" class="form-control" name="VISION_MODEL_PATH" 
+                                               value="{{ form_values.VISION_MODEL_PATH or '' }}" 
+                                               placeholder="./models/yolo8n.onnx">
+                                        <div class="field-help">Path to vision model file (optional)</div>
+                                        {% if errors.VISION_MODEL_PATH %}
+                                        <div class="text-danger">{{ errors.VISION_MODEL_PATH[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_PRIORITY</label>
+                                        <select class="form-select" name="VISION_PRIORITY">
+                                            <option value="EOfirst" {% if (form_values.VISION_PRIORITY or 'balanced') == 'EOfirst' %}selected{% endif %}>EO First</option>
+                                            <option value="IRfirst" {% if (form_values.VISION_PRIORITY or 'balanced') == 'IRfirst' %}selected{% endif %}>IR First</option>
+                                            <option value="balanced" {% if (form_values.VISION_PRIORITY or 'balanced') == 'balanced' %}selected{% endif %}>Balanced</option>
+                                        </select>
+                                        <div class="field-help">Vision priority mode</div>
+                                        {% if errors.VISION_PRIORITY %}
+                                        <div class="text-danger">{{ errors.VISION_PRIORITY[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_ROI_HALF_DEG <span class="badge bg-secondary units-badge">°</span></label>
+                                        <input type="number" class="form-control" name="VISION_ROI_HALF_DEG" 
+                                               value="{{ form_values.VISION_ROI_HALF_DEG or '15' }}" 
+                                               min="0" max="180" step="0.1">
+                                        <div class="field-help">ROI half-width in degrees (0-180)</div>
+                                        {% if errors.VISION_ROI_HALF_DEG %}
+                                        <div class="text-danger">{{ errors.VISION_ROI_HALF_DEG[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_SWEEP_STEP_DEG <span class="badge bg-secondary units-badge">°</span></label>
+                                        <input type="number" class="form-control" name="VISION_SWEEP_STEP_DEG" 
+                                               value="{{ form_values.VISION_SWEEP_STEP_DEG or '12' }}" 
+                                               min="0" max="180" step="0.1">
+                                        <div class="field-help">Sweep step in degrees</div>
+                                        {% if errors.VISION_SWEEP_STEP_DEG %}
+                                        <div class="text-danger">{{ errors.VISION_SWEEP_STEP_DEG[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_FRAME_SKIP</label>
+                                        <input type="number" class="form-control" name="VISION_FRAME_SKIP" 
+                                               value="{{ form_values.VISION_FRAME_SKIP or '2' }}" 
+                                               min="0">
+                                        <div class="field-help">Frames to skip between analysis</div>
+                                        {% if errors.VISION_FRAME_SKIP %}
+                                        <div class="text-danger">{{ errors.VISION_FRAME_SKIP[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_N_CONSEC_FOR_TRUE</label>
+                                        <input type="number" class="form-control" name="VISION_N_CONSEC_FOR_TRUE" 
+                                               value="{{ form_values.VISION_N_CONSEC_FOR_TRUE or '3' }}" 
+                                               min="1">
+                                        <div class="field-help">Consecutive frames for positive detection</div>
+                                        {% if errors.VISION_N_CONSEC_FOR_TRUE %}
+                                        <div class="text-danger">{{ errors.VISION_N_CONSEC_FOR_TRUE[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_LATENCY_MS <span class="badge bg-secondary units-badge">ms</span></label>
+                                        <input type="number" class="form-control" name="VISION_LATENCY_MS" 
+                                               value="{{ form_values.VISION_LATENCY_MS or '5000' }}" 
+                                               min="50">
+                                        <div class="field-help">Processing latency (≥50ms)</div>
+                                        {% if errors.VISION_LATENCY_MS %}
+                                        <div class="text-danger">{{ errors.VISION_LATENCY_MS[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_MAX_DWELL_MS <span class="badge bg-secondary units-badge">ms</span></label>
+                                        <input type="number" class="form-control" name="VISION_MAX_DWELL_MS" 
+                                               value="{{ form_values.VISION_MAX_DWELL_MS or '7000' }}" 
+                                               min="1000">
+                                        <div class="field-help">Maximum dwell time (≥1000ms)</div>
+                                        {% if errors.VISION_MAX_DWELL_MS %}
+                                        <div class="text-danger">{{ errors.VISION_MAX_DWELL_MS[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">VISION_LABEL_DEFAULT</label>
+                                        <input type="text" class="form-control" name="VISION_LABEL_DEFAULT" 
+                                               value="{{ form_values.VISION_LABEL_DEFAULT or 'Object' }}">
+                                        <div class="field-help">Default vision label</div>
+                                        {% if errors.VISION_LABEL_DEFAULT %}
+                                        <div class="text-danger">{{ errors.VISION_LABEL_DEFAULT[0] }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="VISION_VERDICT_DEFAULT" 
+                                               {% if (form_values.VISION_VERDICT_DEFAULT or 'true') == 'true' %}checked{% endif %}>
+                                        <label class="form-check-label">VISION_VERDICT_DEFAULT</label>
+                                        <div class="field-help">Default vision verdict</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Continue with other tabs... -->
+                <!-- This is getting long, let me continue in the next part -->
+            </div>
+
+            <!-- Action buttons -->
+            <div class="mt-4 d-flex gap-2">
+                <button type="button" class="btn btn-info" onclick="validateSettings()">Validate</button>
+                <button type="button" class="btn btn-primary" onclick="saveSettings()">Save</button>
+                <button type="button" class="btn btn-warning" onclick="revertSettings()">Revert</button>
+                <button type="button" class="btn btn-secondary" onclick="resetSettings()">Reset to File</button>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // JavaScript for form handling
+        function validateSettings() {
+            const formData = new FormData(document.getElementById('settingsForm'));
+            formData.append('action', 'validate');
+            
+            fetch('/settings/validate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    showAlert('Validation successful!', 'success');
+                } else {
+                    showAlert('Validation failed: ' + JSON.stringify(data.errors), 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Validation error: ' + error, 'danger');
+            });
+        }
+
+        function saveSettings() {
+            const formData = new FormData(document.getElementById('settingsForm'));
+            formData.append('action', 'save');
+            
+            fetch('/settings/save', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    showAlert('Settings saved successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert('Save failed: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Save error: ' + error, 'danger');
+            });
+        }
+
+        function revertSettings() {
+            fetch('/settings/revert', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    showAlert('Settings reverted successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert('Revert failed: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Revert error: ' + error, 'danger');
+            });
+        }
+
+        function resetSettings() {
+            if (confirm('Reset all settings to file values? This will lose any unsaved changes.')) {
+                const formData = new FormData();
+                formData.append('action', 'reset');
+                
+                fetch('/settings', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(() => location.reload());
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

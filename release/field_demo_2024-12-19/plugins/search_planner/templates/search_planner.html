@@ -1,0 +1,70 @@
+<div class="container py-3">
+  <h5>Search Planner</h5>
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row">
+        <div class="col">
+          <div><strong>State:</strong> <span id="sp-state">—</span></div>
+          <div><strong>Executed tiles:</strong> <span id="sp-tiles">0</span></div>
+          <div><strong>Timeouts:</strong> <span id="sp-timeouts">0</span></div>
+          <div><strong>Last tile:</strong> <span id="sp-last">—</span></div>
+        </div>
+        <div class="col-auto">
+          <button id="sp-demo" class="btn btn-primary btn-sm">Start Simulated Task</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Latest Artifact</div>
+        <div class="card-body" id="sp-artifact">No artifact yet.</div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Docs</div>
+        <div class="card-body">
+          <p class="text-sm mb-1">
+            <a href="/docs/SEARCH_PLANNER_STATE_MACHINE.md" target="_blank">State Machine</a>
+          </p>
+          <p class="text-sm mb-1">
+            <a href="/docs/SEARCH_PLANNER_TESTPLAN.md" target="_blank">Test Plan</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function refreshStatus(){
+  try{
+    const res = await fetch('./status');
+    const j = await res.json();
+    document.getElementById('sp-state').textContent = j.state ?? '—';
+    document.getElementById('sp-tiles').textContent = j.executed_tiles ?? 0;
+    document.getElementById('sp-timeouts').textContent = j.timeouts ?? 0;
+    const lt = j.last_tile ? `az=${j.last_tile.az_deg?.toFixed?.(1) ?? j.last_tile.az_deg}, el=${j.last_tile.el_deg}` : '—';
+    document.getElementById('sp-last').textContent = lt;
+    const art = document.getElementById('sp-artifact');
+    if(j.artifact_path){
+      const isPng = j.artifact_path.toLowerCase().endsWith('.png');
+      art.innerHTML = `<img src="/${j.artifact_path}" alt="artifact" class="img-fluid" style="max-height:240px">`;
+    } else {
+      art.textContent = 'No artifact yet.';
+    }
+  }catch(e){ console.error(e); }
+}
+
+document.getElementById('sp-demo').addEventListener('click', async ()=>{
+  try{
+    await fetch('./simulate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({bearing_deg_true:0, bearing_error_deg:5, source_type:'vision'})});
+  }catch(e){ console.error(e); }
+});
+
+setInterval(refreshStatus, 1000);
+refreshStatus();
+</script>

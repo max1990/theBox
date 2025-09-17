@@ -6,7 +6,7 @@ import time
 def replay(file_path: str, port: int, interval_ms: int):
     addr = ("127.0.0.1", port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+    with open(file_path, encoding="utf-8", errors="ignore") as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -21,13 +21,15 @@ if __name__ == "__main__":
     interval = int(os.getenv("REPLAY_INTERVAL_MS", "400"))
     replay(path, port, interval)
 
-import os, time, socket, sys, ast, json
+import os
+import sys
 from pathlib import Path
 
 INPUT = os.getenv("DRONESHIELD_INPUT_FILE", "data/DroneShield_Detections.txt")
-PORT  = int(os.getenv("DRONESHIELD_UDP_PORT", "56000"))
-HOST  = "127.0.0.1"
+PORT = int(os.getenv("DRONESHIELD_UDP_PORT", "56000"))
+HOST = "127.0.0.1"
 INTERVAL_MS = int(os.getenv("REPLAY_INTERVAL_MS", "400"))
+
 
 def main():
     p = Path(INPUT)
@@ -46,6 +48,7 @@ def main():
             sent += 1
             time.sleep(INTERVAL_MS / 1000.0)
     print(f"[udp_replay] Sent {sent} messages to {HOST}:{PORT}")
+
 
 if __name__ == "__main__":
     main()

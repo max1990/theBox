@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Box - Drone Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <h1>The Box</h1>
+    <div style="position:absolute; top:16px; right:16px">
+        <a href="/test" title="Test Console" style="text-decoration:none; margin-right:12px">🧪 Test Console</a>
+        <a href="/settings" title="Settings" style="text-decoration:none">⚙️ Settings</a>
+    </div>
+
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'Status')" id="defaultOpen">Status</button>
+        <button class="tablinks" onclick="openTab(event, 'EventHistory')">Event History</button>
+        <button class="tablinks" onclick="openTab(event, 'PluginManagement')">Plugin Management</button>
+    </div>
+
+    <div id="Status" class="tabcontent">
+        <h2>Loaded Plugins</h2>
+        <div id="plugins"></div>
+        <h2>Database Content</h2>
+        <pre id="status"></pre>
+    </div>
+
+    <div id="EventHistory" class="tabcontent">
+        <h2>Event History</h2>
+        <table id="eventHistoryTable">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Event Type</th>
+                    <th>Publisher</th>
+                    <th>Data</th>
+                    <th>Notified Plugins</th>
+                    <th>Terminated</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="PluginManagement" class="tabcontent">
+        <h2>Plugin Management</h2>
+        <p>Select which plugins to load on next startup. A restart is required for changes to take effect.</p>
+        <div id="pluginList"></div>
+        <button onclick="savePluginConfig()">Save</button>
+        <p id="saveStatus"></p>
+    </div>
+
+    <script>
+        const createdPluginTabs = new Set();
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Automatically click the first tab to open it
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("defaultOpen").click();
+        });
+
+        async function fetchStatus() {
+            const response = await fetch('/status');
+            const data = await response.json();
+            
+            const pluginsDiv = document.getElementById('plugins');
+            pluginsDiv.innerHTML = '<h3>Loaded Plugins</h3>';
+            data.plugins.forEach(plugin => {
+                let pluginHTML = `<p>${plugin.name}</p>`;
+                pluginsDiv.innerHTML += pluginHTML;
+
+                if (plugin.has_web_interface && !createdPluginTabs.has(plugin.name)) {
+                    createdPluginTabs.add(plugin.name);
+
+                    const tabContainer = document.querySelector('.tab');
+                    const tabId = `Plugin_${plugin.name}`;
+
+                    // Create tab button
+                    const tabButton = document.createElement('button');
+                    tabButton.className = 'tablinks';
+                    tabButton.onclick = (event) => openTab(event, tabId);
+                    tabButton.textContent = plugin.name;
+                    tabContainer.appendChild(tabButton);
+
+                    // Create tab content with iframe
+                    const tabContent = document.createElement('div');
+                    tabContent.id = tabId;
+                    tabContent.className = 'tabcontent';
+                    tabContent.style.height = '80vh';
+                    tabContent.innerHTML = `<iframe src="${plugin.web_url}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    document.body.insertBefore(tabContent, document.querySelector('script'));
+                }
+            });
+
+            document.getElementById('status').textContent = JSON.stringify(data.database, null, 2);
+        }
+
+        async function fetchEventHistory() {
+            const response = await fetch('/event_history');
+            const data = await response.json();
+            
+            const tableBody = document.querySelector("#eventHistoryTable tbody");
+            tableBody.innerHTML = "";
+            data.slice().reverse().forEach(event => {
+                const row = `<tr>
+                    <td>${event.timestamp}</td>
+                    <td>${event.event_type}</td>
+                    <td>${event.publisher}</td>
+                    <td><pre>${JSON.stringify(event.data, null, 2)}</pre></td>
+                    <td>${event.notified_plugins.join(', ')}</td>
+                    <td>${event.terminated}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        async function fetchPluginConfig() {
+            const response = await fetch('/plugins/config');
+            const data = await response.json();
+            
+            const pluginListDiv = document.getElementById('pluginList');
+            pluginListDiv.innerHTML = '';
+            data.available_plugins.forEach(plugin => {
+                const isChecked = data.enabled_plugins.includes(plugin);
+                pluginListDiv.innerHTML += `
+                    <div>
+                        <input type="checkbox" id="plugin-${plugin}" name="${plugin}" value="${plugin}" ${isChecked ? 'checked' : ''}>
+                        <label for="plugin-${plugin}">${plugin}</label>
+                    </div>
+                `;
+            });
+        }
+
+        async function savePluginConfig() {
+            const checkboxes = document.querySelectorAll('#pluginList input[type="checkbox"]');
+            const enabledPlugins = Array.from(checkboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+
+            const response = await fetch('/plugins/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ plugins: enabledPlugins }),
+            });
+            const data = await response.json();
+            if (data.status === 'ok') {
+                document.getElementById('saveStatus').textContent = 'Configuration saved successfully. Please restart the application.';
+            } else {
+                document.getElementById('saveStatus').textContent = 'Error saving configuration.';
+            }
+        }
+
+        setInterval(() => {
+            fetchStatus();
+            fetchEventHistory();
+        }, 2000);
+        fetchStatus();
+        fetchEventHistory();
+        fetchPluginConfig();
+    </script>
+</body>
+</html>

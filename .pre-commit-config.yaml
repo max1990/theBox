@@ -1,0 +1,239 @@
+repos:
+  # Python formatting
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+
+  # Python linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # Python type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-requests, types-PyYAML]
+        args: [--ignore-missing-imports]
+
+  # Security scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: [-r, ., -f, json, -o, bandit-report.json]
+        exclude: ^tests/
+
+  # Dependency security
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+        files: requirements.*\.txt$
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: check-docstring-first
+      - id: requirements-txt-fixer
+
+  # Shell scripts
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [-e, SC1091]
+
+  # Docker
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3008, --ignore, DL3009]
+
+  # Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+
+  # YAML
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c, .yamllint]
+
+  # JSON
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types: [json]
+        args: [--tab-width, 2]
+
+  # Python imports
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: [--profile, black]
+
+  # Python docstrings
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--convention=google]
+
+  # Python complexity
+  - repo: https://github.com/xenon-hq/xenon
+    rev: v0.9.0
+    hooks:
+      - id: xenon
+        args: [--max-absolute B, --max-modules A, --max-average A]
+
+  # Python security
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+
+  # Python dependencies
+  - repo: https://github.com/jazzband/pip-tools
+    rev: 7.5.0
+    hooks:
+      - id: pip-compile
+        files: requirements\.in$
+        args: [--upgrade]
+
+  # Python testing
+  - repo: https://github.com/pre-commit/mirrors-pytest
+    rev: v8.4.2
+    hooks:
+      - id: pytest
+        args: [--maxfail=1]
+
+  # Python coverage
+  - repo: https://github.com/pre-commit/mirrors-coverage
+    rev: v7.6.0
+    hooks:
+      - id: coverage
+        args: [run, --source=., -m, pytest]
+
+  # Python packaging
+  - repo: https://github.com/pre-commit/mirrors-check-manifest
+    rev: v0.50
+    hooks:
+      - id: check-manifest
+
+  # Python setup
+  - repo: https://github.com/pre-commit/mirrors-check-ast
+    rev: 1.1.0
+    hooks:
+      - id: check-ast
+
+  # Python imports
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.17.0
+    hooks:
+      - id: pyupgrade
+        args: [--py38-plus]
+
+  # Python unused imports
+  - repo: https://github.com/pre-commit/mirrors-autoflake
+    rev: v2.5.0
+    hooks:
+      - id: autoflake
+        args: [--in-place, --remove-all-unused-imports, --remove-unused-variables]
+
+  # Python docstring format
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        args: [--convention=google]
+
+  # Python complexity
+  - repo: https://github.com/xenon-hq/xenon
+    rev: v0.9.0
+    hooks:
+      - id: xenon
+        args: [--max-absolute B, --max-modules A, --max-average A]
+
+  # Python security
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+
+  # Python dependencies
+  - repo: https://github.com/jazzband/pip-tools
+    rev: 7.5.0
+    hooks:
+      - id: pip-compile
+        files: requirements\.in$
+        args: [--upgrade]
+
+  # Python testing
+  - repo: https://github.com/pre-commit/mirrors-pytest
+    rev: v8.4.2
+    hooks:
+      - id: pytest
+        args: [--maxfail=1]
+
+  # Python coverage
+  - repo: https://github.com/pre-commit/mirrors-coverage
+    rev: v7.6.0
+    hooks:
+      - id: coverage
+        args: [run, --source=., -m, pytest]
+
+  # Python packaging
+  - repo: https://github.com/pre-commit/mirrors-check-manifest
+    rev: v0.50
+    hooks:
+      - id: check-manifest
+
+  # Python setup
+  - repo: https://github.com/pre-commit/mirrors-check-ast
+    rev: 1.1.0
+    hooks:
+      - id: check-ast
+
+  # Python imports
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.17.0
+    hooks:
+      - id: pyupgrade
+        args: [--py38-plus]
+
+  # Python unused imports
+  - repo: https://github.com/pre-commit/mirrors-autoflake
+    rev: v2.5.0
+    hooks:
+      - id: autoflake
+        args: [--in-place, --remove-all-unused-imports, --remove-unused-variables]

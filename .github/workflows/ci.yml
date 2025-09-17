@@ -1,0 +1,318 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  PYTHON_VERSION: '3.8'
+  NODE_VERSION: '18'
+
+jobs:
+  # Lint and format checks
+  lint:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run Black formatter check
+      run: black --check --diff .
+    
+    - name: Run Ruff linter
+      run: ruff check .
+    
+    - name: Run MyPy type checker
+      run: mypy --ignore-missing-imports .
+    
+    - name: Run Bandit security linter
+      run: bandit -r . -f json -o bandit-report.json || true
+    
+    - name: Upload Bandit report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  # Unit and integration tests
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run unit tests
+      run: |
+        python scripts/run_tests.py --suite unit --coverage
+    
+    - name: Run integration tests
+      run: |
+        python scripts/run_tests.py --suite integration --coverage
+    
+    - name: Run plugin tests
+      run: |
+        python scripts/run_tests.py --suite plugins --coverage
+    
+    - name: Run smoke test
+      run: |
+        python scripts/smoke_test.py
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.8'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Security and dependency checks
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run Safety check
+      run: safety check --json --output safety-report.json || true
+    
+    - name: Run Bandit security scan
+      run: bandit -r . -f json -o bandit-report.json || true
+    
+    - name: Generate SBOM
+      run: |
+        cyclonedx-py -o sbom.json
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          safety-report.json
+          bandit-report.json
+          sbom.json
+
+  # Plugin conformance validation
+  plugin-validation:
+    name: Plugin Validation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run plugin conformance validation
+      run: |
+        python scripts/validate_plugin_conformance.py --verbose
+    
+    - name: Validate bearing normalization
+      run: |
+        python scripts/validate_plugin_conformance.py --bearing-normalization
+    
+    - name: Validate JSON schemas
+      run: |
+        python scripts/validate_plugin_conformance.py --json-schemas
+
+  # Docker build and test
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dockerfile: [Dockerfile.workstation, Dockerfile.jetson]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ matrix.dockerfile }}
+        push: false
+        tags: thebox:${{ matrix.dockerfile }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Test Docker image
+      run: |
+        docker run --rm thebox:${{ matrix.dockerfile }} python scripts/health_check.py
+
+  # Performance tests
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run performance tests
+      run: |
+        python scripts/run_tests.py --suite performance
+    
+    - name: Run load tests
+      run: |
+        python scripts/load_test.py
+    
+    - name: Generate performance report
+      run: |
+        python scripts/performance_report.py
+
+  # Documentation build
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Build documentation
+      run: |
+        sphinx-build -b html docs/ docs/_build/html
+    
+    - name: Upload documentation
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: docs/_build/html/
+
+  # Release packaging
+  release:
+    name: Release Package
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    needs: [lint, test, security, plugin-validation, docker]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Create release package
+      run: |
+        python scripts/package_release.py --name "release_${{ github.event.release.tag_name }}" --format zip
+    
+    - name: Upload release package
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-package
+        path: release/
+
+  # Notification
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [lint, test, security, plugin-validation, docker]
+    
+    steps:
+    - name: Notify on success
+      if: ${{ needs.lint.result == 'success' && needs.test.result == 'success' && needs.security.result == 'success' && needs.plugin-validation.result == 'success' && needs.docker.result == 'success' }}
+      run: |
+        echo "✅ All CI checks passed successfully!"
+    
+    - name: Notify on failure
+      if: ${{ needs.lint.result == 'failure' || needs.test.result == 'failure' || needs.security.result == 'failure' || needs.plugin-validation.result == 'failure' || needs.docker.result == 'failure' }}
+      run: |
+        echo "❌ CI checks failed. Please review the logs."
+        exit 1

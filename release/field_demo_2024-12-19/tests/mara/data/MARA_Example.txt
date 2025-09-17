@@ -1,0 +1,25 @@
+# MARA Example Data - Various formats supported
+# JSON Lines format
+{"timestamp": "2025-01-16T10:30:45.123Z", "sensor_id": "EO_001", "object_id": "obj_123", "confidence": 0.85, "bearing_deg": 45.2, "elevation_deg": 12.5, "range_m": 1500.0, "lat": 40.7128, "lon": -74.0060, "speed_mps": 15.2, "heading_deg": 90.0, "label": "drone", "channel": "EO"}
+{"timestamp": "2025-01-16T10:30:46.456Z", "sensor_id": "IR_002", "object_id": "obj_124", "confidence": 0.92, "bearing_deg": 120.5, "elevation_deg": 8.3, "range_m": 2200.0, "lat": 40.7130, "lon": -74.0058, "speed_mps": 22.1, "heading_deg": 180.0, "label": "aircraft", "channel": "IR"}
+{"timestamp": "2025-01-16T10:30:47.789Z", "sensor_id": "ACOUSTIC_003", "object_id": "obj_125", "confidence": 0.78, "bearing_deg": 270.8, "elevation_deg": 5.1, "range_m": 800.0, "lat": 40.7125, "lon": -74.0062, "speed_mps": 8.5, "heading_deg": 270.0, "label": "helicopter", "channel": "ACOUSTIC"}
+
+# Key=Value format
+timestamp=2025-01-16T10:31:00.000Z sensor_id=EO_001 object_id=obj_126 confidence=0.91 bearing_deg=180.3 elevation_deg=15.2 range_m=3000.0 lat=40.7140 lon=-74.0040 speed_mps=25.0 heading_deg=0.0 label=drone channel=EO
+timestamp=2025-01-16T10:31:01.000Z sensor_id=IR_002 object_id=obj_127 confidence=0.67 bearing_deg=315.7 elevation_deg=3.8 range_m=1200.0 lat=40.7135 lon=-74.0055 speed_mps=12.3 heading_deg=315.0 label=unknown channel=IR
+
+# CSV format (with header)
+timestamp,sensor_id,object_id,confidence,bearing_deg,elevation_deg,range_m,lat,lon,speed_mps,heading_deg,label,channel
+2025-01-16T10:31:30.000Z,ACOUSTIC_003,obj_128,0.88,45.0,10.5,1800.0,40.7120,-74.0065,18.7,45.0,drone,ACOUSTIC
+2025-01-16T10:31:31.000Z,EO_001,obj_129,0.95,90.0,20.0,2500.0,40.7135,-74.0045,30.0,90.0,aircraft,EO
+
+# Heartbeat/Status messages
+{"timestamp": "2025-01-16T10:32:00.000Z", "sensor_id": "EO_001", "status": "active", "channel": "EO", "message": "sensor_heartbeat"}
+{"timestamp": "2025-01-16T10:32:01.000Z", "sensor_id": "IR_002", "status": "calibrating", "channel": "IR", "message": "sensor_status"}
+
+# Track updates
+{"timestamp": "2025-01-16T10:32:30.000Z", "sensor_id": "EO_001", "object_id": "obj_123", "track_id": "track_001", "confidence": 0.89, "bearing_deg": 46.1, "elevation_deg": 13.2, "range_m": 1450.0, "lat": 40.7129, "lon": -74.0059, "speed_mps": 16.1, "heading_deg": 91.0, "label": "drone", "channel": "EO", "event_type": "TRACK"}
+
+# Malformed data (should be handled gracefully)
+{"timestamp": "2025-01-16T10:33:00.000Z", "sensor_id": "EO_001", "object_id": "obj_130", "confidence": "invalid", "bearing_deg": "not_a_number", "channel": "EO"}
+{"incomplete": "json", "sensor_id": "IR_002"}

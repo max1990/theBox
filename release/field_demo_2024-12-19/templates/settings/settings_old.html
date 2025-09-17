@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - The Box</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+<div class="container mt-3">
+  <h2>Environment & Offsets</h2>
+  {% if success %}
+  <div class="alert alert-success">Settings saved</div>
+  {% elif error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  {% if require_password %}
+  <form method="post" action="/settings">
+    <div class="card p-3">
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" name="password" placeholder="Enter password">
+      </div>
+      <button class="btn btn-primary" name="action" value="login">Unlock</button>
+    </div>
+  </form>
+  {% else %}
+  <form method="post" action="/settings">
+    <ul class="nav nav-tabs" role="tablist">
+      {% for tab in ["Networking","Offsets","Vision","Confidence","Range","Capture","Demo"] %}
+      <li class="nav-item"><a class="nav-link {% if loop.index0==0 %}active{% endif %}" data-bs-toggle="tab" href="#tab{{loop.index}}">{{tab}}</a></li>
+      {% endfor %}
+    </ul>
+    <div class="tab-content">
+      <div id="tab1" class="tab-pane fade show active p-3">
+        <div class="card p-3">
+          <div class="mb-3">
+            <label class="form-label">SEACROSS_HOST</label>
+            <input class="form-control" name="SEACROSS_HOST" value="{{ form_values.SEACROSS_HOST or '' }}" placeholder="255.255.255.255">
+            {% if errors.SEACROSS_HOST %}<div class="text-danger">{{ errors.SEACROSS_HOST }}</div>{% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">SEACROSS_PORT <span class="badge bg-secondary">1-65535</span></label>
+            <input class="form-control" name="SEACROSS_PORT" value="{{ form_values.SEACROSS_PORT or '' }}" placeholder="2000">
+            {% if errors.SEACROSS_PORT %}<div class="text-danger">{{ errors.SEACROSS_PORT }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+      <div id="tab2" class="tab-pane fade p-3">
+        <div class="card p-3">
+          {% for k in ["BOW_ZERO_DEG","DRONESHIELD_BEARING_OFFSET_DEG","TRAKKA_BEARING_OFFSET_DEG","VISION_BEARING_OFFSET_DEG","ACOUSTIC_BEARING_OFFSET_DEG"] %}
+          <div class="mb-3">
+            <label class="form-label">{{k}} <span class="badge bg-secondary">°</span></label>
+            <input class="form-control" name="{{k}}" value="{{ form_values[k] or '' }}" placeholder="0">
+            {% if errors[k] %}<div class="text-danger">{{ errors[k] }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="tab3" class="tab-pane fade p-3">
+        <div class="card p-3">
+          {% set keys = [
+            'VISION_BACKEND','VISION_MODEL_PATH','VISION_INPUT_RES','VISION_ROI_HALF_DEG','VISION_FRAME_SKIP','VISION_N_CONSEC_FOR_TRUE','VISION_LATENCY_MS','VISION_MAX_DWELL_MS','VISION_SWEEP_STEP_DEG','VISION_PRIORITY','VISION_VERDICT_DEFAULT','VISION_LABEL_DEFAULT'
+          ] %}
+          {% for k in keys %}
+          <div class="mb-3">
+            <label class="form-label">{{k}}</label>
+            <input class="form-control" name="{{k}}" value="{{ form_values[k] or '' }}">
+            {% if errors[k] %}<div class="text-danger">{{ errors[k] }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="tab4" class="tab-pane fade p-3">
+        <div class="card p-3">
+          {% set keys = ['CONFIDENCE_BASE','CONFIDENCE_TRUE','CONFIDENCE_FALSE','CONF_FUSION_METHOD','WEIGHT_RF','WEIGHT_VISION','WEIGHT_IR','WEIGHT_ACOUSTIC','CONF_HYSTERESIS'] %}
+          {% for k in keys %}
+          <div class="mb-3">
+            <label class="form-label">{{k}}</label>
+            <input class="form-control" name="{{k}}" value="{{ form_values[k] or '' }}">
+            {% if errors[k] %}<div class="text-danger">{{ errors[k] }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="tab5" class="tab-pane fade p-3">
+        <div class="card p-3">
+          {% set keys = ['RANGE_MODE','RANGE_FIXED_KM','RANGE_RSSI_REF_DBM','RANGE_RSSI_REF_KM','RANGE_MIN_KM','RANGE_MAX_KM','RANGE_EWMA_ALPHA','EO_FOV_WIDE_DEG','EO_FOV_NARROW_DEG','IR_FOV_WIDE_DEG','IR_FOV_NARROW_DEG'] %}
+          {% for k in keys %}
+          <div class="mb-3">
+            <label class="form-label">{{k}}</label>
+            <input class="form-control" name="{{k}}" value="{{ form_values[k] or '' }}">
+            {% if errors[k] %}<div class="text-danger">{{ errors[k] }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="tab6" class="tab-pane fade p-3">
+        <div class="card p-3">
+          {% set keys = ['CAPTURE_API','CAPTURE_RES','CAMERA_CONNECTED','DRONESHIELD_INPUT_FILE','LOG_PATH'] %}
+          {% for k in keys %}
+          <div class="mb-3">
+            <label class="form-label">{{k}}</label>
+            <input class="form-control" name="{{k}}" value="{{ form_values[k] or '' }}">
+            {% if errors[k] %}<div class="text-danger">{{ errors[k] }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="mt-3">
+      <button class="btn btn-primary" name="action" value="save">Save</button>
+      <button class="btn btn-secondary" name="action" value="reset">Reset to file</button>
+      <button class="btn btn-warning" name="action" value="revert">Revert (last saved)</button>
+      <button class="btn btn-info" name="action" value="validate">Validate only</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
